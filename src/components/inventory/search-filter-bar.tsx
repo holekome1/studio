@@ -1,3 +1,4 @@
+
 "use client";
 
 import type * as React from "react";
@@ -10,16 +11,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search, Filter } from "lucide-react";
-import type { PartCategory } from "@/types";
 import { पार्टCategories } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
+
+export const ALL_CATEGORIES_VALUE = "__ALL_CATEGORIES__";
+export const ALL_LOCATIONS_VALUE = "__ALL_LOCATIONS__";
 
 interface SearchFilterBarProps {
   searchTerm: string;
   onSearchChange: (term: string) => void;
-  categoryFilter: string;
+  categoryFilter: string; // This will now receive ALL_CATEGORIES_VALUE when "All" is selected
   onCategoryChange: (category: string) => void;
-  locationFilter: string;
+  locationFilter: string; // This will now receive ALL_LOCATIONS_VALUE when "All" is selected
   onLocationChange: (location: string) => void;
   availableLocations: string[];
 }
@@ -54,7 +57,7 @@ export function SearchFilterBar({
               <SelectValue placeholder="Filter by category" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Categories</SelectItem>
+              <SelectItem value={ALL_CATEGORIES_VALUE}>All Categories</SelectItem>
               {पार्टCategories.map((category) => (
                 <SelectItem key={category} value={category}>
                   {category}
@@ -69,7 +72,7 @@ export function SearchFilterBar({
               <SelectValue placeholder="Filter by location" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Locations</SelectItem>
+              <SelectItem value={ALL_LOCATIONS_VALUE}>All Locations</SelectItem>
               {availableLocations.map((location) => (
                 <SelectItem key={location} value={location}>
                   {location}

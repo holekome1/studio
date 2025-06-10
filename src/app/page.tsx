@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
@@ -22,8 +23,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { PartForm } from "@/components/inventory/part-form";
 import { PartTable } from "@/components/inventory/part-table";
-import { SearchFilterBar } from "@/components/inventory/search-filter-bar";
-import type { Part, PartCategory } from "@/types";
+import { SearchFilterBar, ALL_CATEGORIES_VALUE, ALL_LOCATIONS_VALUE } from "@/components/inventory/search-filter-bar";
+import type { Part } from "@/types";
 import { useToast } from "@/hooks/use-toast";
 import { PlusCircle } from "lucide-react";
 
@@ -109,6 +110,14 @@ const Home: NextPage = () => {
     });
   }, [parts, searchTerm, categoryFilter, locationFilter]);
 
+  const handleCategoryChange = (value: string) => {
+    setCategoryFilter(value === ALL_CATEGORIES_VALUE ? "" : value);
+  };
+
+  const handleLocationChange = (value: string) => {
+    setLocationFilter(value === ALL_LOCATIONS_VALUE ? "" : value);
+  };
+
   return (
     <div className="container mx-auto py-2">
       <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
@@ -121,10 +130,10 @@ const Home: NextPage = () => {
       <SearchFilterBar
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
-        categoryFilter={categoryFilter}
-        onCategoryChange={setCategoryFilter}
-        locationFilter={locationFilter}
-        onLocationChange={setLocationFilter}
+        categoryFilter={categoryFilter === "" ? ALL_CATEGORIES_VALUE : categoryFilter}
+        onCategoryChange={handleCategoryChange}
+        locationFilter={locationFilter === "" ? ALL_LOCATIONS_VALUE : locationFilter}
+        onLocationChange={handleLocationChange}
         availableLocations={availableLocations}
       />
 
