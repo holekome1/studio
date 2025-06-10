@@ -34,6 +34,11 @@ const initialPartsData: Part[] = [
   { id: "3", name: "Brake Pads Front Set", quantity: 25, price: 25.00, storageLocation: "Shelf C-5", category: "Braking System" },
   { id: "4", name: "LED Headlight Bulb H4", quantity: 15, price: 19.95, storageLocation: "Electrical A-1", category: "Electrical Components" },
   { id: "5", name: "Chain Lube Motul C2+", quantity: 40, price: 12.50, storageLocation: "Fluids Rack 1", category: "Fluids & Chemicals" },
+  { id: "6", name: "Motorcycle Cover Waterproof", quantity: 10, price: 35.00, storageLocation: "Accessories Bin", category: "Accessories" },
+  { id: "7", name: "Handlebar Grips Yamaha", quantity: 20, price: 15.75, storageLocation: "Shelf D-3", category: "Body & Frame" },
+  { id: "8", name: "Tire Pirelli Diablo Rosso III", quantity: 5, price: 150.00, storageLocation: "Tire Rack 2", category: "Wheels & Tires" },
+  { id: "9", name: "Air Filter Twin Air", quantity: 18, price: 22.30, storageLocation: "Shelf A-2", category: "Engine Parts" },
+  { id: "10", name: "Battery Yuasa YTZ10S", quantity: 12, price: 95.50, storageLocation: "Electrical B-4", category: "Electrical Components" },
 ];
 
 const Home: NextPage = () => {
