@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/toaster";
 import AppLayout from '@/components/layout/app-layout';
 
 export const metadata: Metadata = {
-  title: 'Motorpart Central',
+  title: 'GUDANG MAJU SEJAHTRA',
   description: 'Inventory management for motorbike spare parts',
 };
 
