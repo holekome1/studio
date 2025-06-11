@@ -29,16 +29,21 @@ import { useToast } from "@/hooks/use-toast";
 import { PlusCircle } from "lucide-react";
 
 const initialPartsData: Part[] = [
-  { id: "1", name: "Spark Plug NGK CR7HSA", quantity: 50, price: 3.50, storageLocation: "Shelf A-1", category: "Engine Parts" },
-  { id: "2", name: "Oil Filter Honda OEM", quantity: 30, price: 8.99, storageLocation: "Shelf B-2", category: "Engine Parts" },
-  { id: "3", name: "Brake Pads Front Set", quantity: 25, price: 25.00, storageLocation: "Shelf C-5", category: "Braking System" },
-  { id: "4", name: "LED Headlight Bulb H4", quantity: 15, price: 19.95, storageLocation: "Electrical A-1", category: "Electrical Components" },
-  { id: "5", name: "Chain Lube Motul C2+", quantity: 40, price: 12.50, storageLocation: "Fluids Rack 1", category: "Fluids & Chemicals" },
-  { id: "6", name: "Motorcycle Cover Waterproof", quantity: 10, price: 35.00, storageLocation: "Accessories Bin", category: "Accessories" },
-  { id: "7", name: "Handlebar Grips Yamaha", quantity: 20, price: 15.75, storageLocation: "Shelf D-3", category: "Body & Frame" },
-  { id: "8", name: "Tire Pirelli Diablo Rosso III", quantity: 5, price: 150.00, storageLocation: "Tire Rack 2", category: "Wheels & Tires" },
-  { id: "9", name: "Air Filter Twin Air", quantity: 18, price: 22.30, storageLocation: "Shelf A-2", category: "Engine Parts" },
-  { id: "10", name: "Battery Yuasa YTZ10S", quantity: 12, price: 95.50, storageLocation: "Electrical B-4", category: "Electrical Components" },
+  { id: "1", name: "Spark Plug NGK CR7HSA", quantity: 50, price: 52500, storageLocation: "Shelf A-1", category: "Engine Parts" },
+  { id: "2", name: "Oil Filter Honda OEM", quantity: 30, price: 134850, storageLocation: "Shelf B-2", category: "Engine Parts" },
+  { id: "3", name: "Brake Pads Front Set", quantity: 25, price: 375000, storageLocation: "Shelf C-5", category: "Braking System" },
+  { id: "4", name: "LED Headlight Bulb H4", quantity: 15, price: 299250, storageLocation: "Electrical A-1", category: "Electrical Components" },
+  { id: "5", name: "Chain Lube Motul C2+", quantity: 40, price: 187500, storageLocation: "Fluids Rack 1", category: "Fluids & Chemicals" },
+  { id: "6", name: "Motorcycle Cover Waterproof", quantity: 10, price: 525000, storageLocation: "Accessories Bin", category: "Accessories" },
+  { id: "7", name: "Handlebar Grips Yamaha", quantity: 20, price: 236250, storageLocation: "Shelf D-3", category: "Body & Frame" },
+  { id: "8", name: "Tire Pirelli Diablo Rosso III", quantity: 5, price: 2250000, storageLocation: "Tire Rack 2", category: "Wheels & Tires" },
+  { id: "9", name: "Air Filter Twin Air", quantity: 18, price: 334500, storageLocation: "Shelf A-2", category: "Engine Parts" },
+  { id: "10", name: "Battery Yuasa YTZ10S", quantity: 12, price: 1432500, storageLocation: "Electrical B-4", category: "Electrical Components" },
+  { id: "11", name: "Kabel Rem Belakang", quantity: 22, price: 45000, storageLocation: "Gudang Kabel", category: "Braking System" },
+  { id: "12", name: "Bohlam Sein (1 pasang)", quantity: 50, price: 25000, storageLocation: "Rak Bohlam", category: "Electrical Components" },
+  { id: "13", name: "Spion Standar Kanan", quantity: 15, price: 75000, storageLocation: "Lemari Spion", category: "Body & Frame" },
+  { id: "14", name: "Oli Mesin Federal Oil", quantity: 30, price: 65000, storageLocation: "Rak Oli", category: "Fluids & Chemicals" },
+  { id: "15", name: "Kampas Kopling Set", quantity: 10, price: 250000, storageLocation: "Kotak Kopling", category: "Engine Parts" },
 ];
 
 const Home: NextPage = () => {
@@ -53,7 +58,6 @@ const Home: NextPage = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Simulate loading initial data or fetching from local storage
     const storedParts = localStorage.getItem("motorparts");
     if (storedParts) {
       setParts(JSON.parse(storedParts));
@@ -63,7 +67,6 @@ const Home: NextPage = () => {
   }, []);
 
   useEffect(() => {
-    // Save parts to local storage whenever they change
     localStorage.setItem("motorparts", JSON.stringify(parts));
   }, [parts]);
 
@@ -71,7 +74,7 @@ const Home: NextPage = () => {
     const newPart: Part = { ...values, id: Date.now().toString() };
     setParts((prev) => [...prev, newPart]);
     setIsPartFormOpen(false);
-    toast({ title: "Part Added", description: `${values.name} has been added to inventory.` });
+    toast({ title: "Suku Cadang Ditambahkan", description: `${values.name} telah ditambahkan ke inventaris.` });
   };
 
   const handleEditPart = (values: Omit<Part, "id">) => {
@@ -81,15 +84,15 @@ const Home: NextPage = () => {
     );
     setIsPartFormOpen(false);
     setEditingPart(undefined);
-    toast({ title: "Part Updated", description: `${values.name} has been updated.` });
+    toast({ title: "Suku Cadang Diperbarui", description: `${values.name} telah diperbarui.` });
   };
 
   const handleDeletePart = () => {
     if (!partToDeleteId) return;
-    const partName = parts.find(p => p.id === partToDeleteId)?.name || "Part";
+    const partName = parts.find(p => p.id === partToDeleteId)?.name || "Suku Cadang";
     setParts((prev) => prev.filter((p) => p.id !== partToDeleteId));
     setPartToDeleteId(null);
-    toast({ title: "Part Deleted", description: `${partName} has been removed from inventory.`, variant: "destructive" });
+    toast({ title: "Suku Cadang Dihapus", description: `${partName} telah dihapus dari inventaris.`, variant: "destructive" });
   };
 
   const openEditForm = (part: Part) => {
@@ -126,9 +129,9 @@ const Home: NextPage = () => {
   return (
     <div className="container mx-auto py-2">
       <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-        <h1 className="font-headline text-3xl font-bold">Inventory Management</h1>
+        <h1 className="font-headline text-3xl font-bold">Manajemen Inventaris</h1>
         <Button onClick={() => { setEditingPart(undefined); setIsPartFormOpen(true); }}>
-          <PlusCircle className="mr-2 h-5 w-5" /> Add New Part
+          <PlusCircle className="mr-2 h-5 w-5" /> Tambah Suku Cadang Baru
         </Button>
       </div>
 
@@ -148,10 +151,10 @@ const Home: NextPage = () => {
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="font-headline text-2xl">
-              {editingPart ? "Edit Part" : "Add New Part"}
+              {editingPart ? "Edit Suku Cadang" : "Tambah Suku Cadang Baru"}
             </DialogTitle>
-            {editingPart && <DialogDescription>Update the details for {editingPart.name}.</DialogDescription>}
-            {!editingPart && <DialogDescription>Enter the details for the new spare part.</DialogDescription>}
+            {editingPart && <DialogDescription>Perbarui detail untuk {editingPart.name}.</DialogDescription>}
+            {!editingPart && <DialogDescription>Masukkan detail untuk suku cadang baru.</DialogDescription>}
             
           </DialogHeader>
           <div className="mt-4">
@@ -168,16 +171,16 @@ const Home: NextPage = () => {
       <AlertDialog open={!!partToDeleteId} onOpenChange={() => setPartToDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure you want to delete this part?</AlertDialogTitle>
+            <AlertDialogTitle>Apakah Anda yakin ingin menghapus suku cadang ini?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently remove the part
-              "{parts.find(p => p.id === partToDeleteId)?.name || ''}" from your inventory.
+              Tindakan ini tidak dapat dibatalkan. Ini akan menghapus suku cadang secara permanen
+              "{parts.find(p => p.id === partToDeleteId)?.name || ''}" dari inventaris Anda.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setPartToDeleteId(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setPartToDeleteId(null)}>Batal</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeletePart} className="bg-destructive hover:bg-destructive/90">
-              Delete
+              Hapus
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -187,3 +190,5 @@ const Home: NextPage = () => {
 };
 
 export default Home;
+
+    

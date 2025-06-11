@@ -1,3 +1,4 @@
+
 "use client";
 
 import type * as React from "react";
@@ -21,14 +22,23 @@ interface PartTableProps {
   onDelete: (partId: string) => void;
 }
 
+const formatRupiah = (amount: number) => {
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+};
+
 export function PartTable({ parts, onEdit, onDelete }: PartTableProps) {
   if (parts.length === 0) {
     return (
       <Card className="mt-6">
         <CardContent className="flex flex-col items-center justify-center p-10 text-center">
           <Package className="mb-4 h-16 w-16 text-muted-foreground" />
-          <h3 className="text-xl font-semibold text-muted-foreground">No Parts in Inventory</h3>
-          <p className="text-muted-foreground">Add a new part to get started.</p>
+          <h3 className="text-xl font-semibold text-muted-foreground">Tidak Ada Suku Cadang di Inventaris</h3>
+          <p className="text-muted-foreground">Tambahkan suku cadang baru untuk memulai.</p>
         </CardContent>
       </Card>
     );
@@ -37,19 +47,19 @@ export function PartTable({ parts, onEdit, onDelete }: PartTableProps) {
   return (
     <Card className="mt-6 shadow-lg">
       <CardHeader>
-        <CardTitle className="font-headline text-2xl">Inventory List</CardTitle>
+        <CardTitle className="font-headline text-2xl">Daftar Inventaris</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead className="text-right">Quantity</TableHead>
-                <TableHead className="text-right">Price</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead>Nama</TableHead>
+                <TableHead>Kategori</TableHead>
+                <TableHead className="text-right">Jumlah</TableHead>
+                <TableHead className="text-right">Harga</TableHead>
+                <TableHead>Lokasi</TableHead>
+                <TableHead className="text-right">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -61,7 +71,7 @@ export function PartTable({ parts, onEdit, onDelete }: PartTableProps) {
                   </TableCell>
                   <TableCell className="text-right">{part.quantity}</TableCell>
                   <TableCell className="text-right">
-                    ${part.price.toFixed(2)}
+                    {formatRupiah(part.price)}
                   </TableCell>
                   <TableCell>{part.storageLocation}</TableCell>
                   <TableCell className="text-right space-x-2">
@@ -78,7 +88,7 @@ export function PartTable({ parts, onEdit, onDelete }: PartTableProps) {
                       size="icon"
                       onClick={() => onDelete(part.id)}
                       className="text-destructive hover:text-destructive"
-                      aria-label={`Delete ${part.name}`}
+                      aria-label={`Hapus ${part.name}`}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -92,3 +102,5 @@ export function PartTable({ parts, onEdit, onDelete }: PartTableProps) {
     </Card>
   );
 }
+
+    

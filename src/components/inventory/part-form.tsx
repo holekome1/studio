@@ -1,3 +1,4 @@
+
 "use client";
 
 import type * as React from "react";
@@ -25,10 +26,10 @@ import type { Part, PartCategory } from "@/types";
 import { पार्टCategories } from "@/types";
 
 const formSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters."),
-  quantity: z.coerce.number().int().min(0, "Quantity cannot be negative."),
-  price: z.coerce.number().min(0, "Price cannot be negative."),
-  storageLocation: z.string().min(1, "Storage location is required."),
+  name: z.string().min(2, "Nama minimal 2 karakter."),
+  quantity: z.coerce.number().int().min(0, "Jumlah tidak boleh negatif."),
+  price: z.coerce.number().min(0, "Harga tidak boleh negatif."),
+  storageLocation: z.string().min(1, "Lokasi penyimpanan harus diisi."),
   category: z.enum(पार्टCategories),
 });
 
@@ -66,9 +67,9 @@ export function PartForm({
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Part Name</FormLabel>
+              <FormLabel>Nama Suku Cadang</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., Spark Plug NGK CR7HSA" {...field} />
+                <Input placeholder="cth., Busi NGK CR7HSA" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -81,9 +82,9 @@ export function PartForm({
             name="quantity"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Quantity</FormLabel>
+                <FormLabel>Jumlah</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="e.g., 10" {...field} />
+                  <Input type="number" placeholder="cth., 10" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -94,9 +95,9 @@ export function PartForm({
             name="price"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Price (per unit)</FormLabel>
+                <FormLabel>Harga (per unit)</FormLabel>
                 <FormControl>
-                  <Input type="number" step="0.01" placeholder="e.g., 15.99" {...field} />
+                  <Input type="number" step="1" placeholder="cth., 50000" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -109,9 +110,9 @@ export function PartForm({
           name="storageLocation"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Storage Location</FormLabel>
+              <FormLabel>Lokasi Penyimpanan</FormLabel>
               <FormControl>
-                <Input placeholder="e.g., Shelf A-3" {...field} />
+                <Input placeholder="cth., Rak A-3" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -123,11 +124,11 @@ export function PartForm({
           name="category"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Category</FormLabel>
+              <FormLabel>Kategori</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a category" />
+                    <SelectValue placeholder="Pilih kategori" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -145,13 +146,15 @@ export function PartForm({
 
         <div className="flex justify-end space-x-3 pt-4">
           <Button type="button" variant="outline" onClick={onCancel}>
-            Cancel
+            Batal
           </Button>
           <Button type="submit" variant="default">
-            {isEditing ? "Save Changes" : "Add Part"}
+            {isEditing ? "Simpan Perubahan" : "Tambah Suku Cadang"}
           </Button>
         </div>
       </form>
     </Form>
   );
 }
+
+    
