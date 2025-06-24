@@ -109,17 +109,58 @@ const Home: NextPage = () => {
   };
   
   const handleAddPart = (values: PartFormValues) => {
-    const newPart: Part = { ...values, id: Date.now().toString() };
-    setParts((prev) => [...prev, newPart]);
-    
-    createTransaction({
-      type: 'in',
-      items: [{ partId: newPart.id, partName: newPart.name, quantity: newPart.quantity, price: newPart.price }],
-      notes: 'Suku cadang baru ditambahkan'
-    });
+    const existingPart = parts.find(
+      (p) => p.name.trim().toLowerCase() === values.name.trim().toLowerCase()
+    );
+
+    if (existingPart) {
+      // Part exists, so we update the quantity and other details
+      setParts(
+        parts.map((p) =>
+          p.id === existingPart.id
+            ? {
+                ...p,
+                quantity: p.quantity + values.quantity,
+                price: values.price, // Update price to latest
+                storageLocation: values.storageLocation,
+                category: values.category,
+                minStock: values.minStock,
+              }
+            : p
+        )
+      );
+
+      // Create a transaction for the stock addition
+      createTransaction({
+        type: 'in',
+        items: [{ partId: existingPart.id, partName: existingPart.name, quantity: values.quantity, price: values.price }],
+        notes: `Penambahan stok untuk barang yang sudah ada: ${existingPart.name}`,
+      });
+
+      toast({
+        title: "Stok Diperbarui",
+        description: `Jumlah untuk ${existingPart.name} telah ditambahkan.`,
+      });
+
+    } else {
+      // Part is new, add it to the inventory
+      const newPart: Part = { ...values, id: Date.now().toString() };
+      setParts((prev) => [...prev, newPart]);
+
+      // Create a transaction for the new part
+      createTransaction({
+        type: 'in',
+        items: [{ partId: newPart.id, partName: newPart.name, quantity: newPart.quantity, price: newPart.price }],
+        notes: 'Suku cadang baru ditambahkan',
+      });
+
+      toast({
+        title: "Suku Cadang Ditambahkan",
+        description: `${values.name} telah ditambahkan ke inventaris.`,
+      });
+    }
 
     setIsPartFormOpen(false);
-    toast({ title: "Suku Cadang Ditambahkan", description: `${values.name} telah ditambahkan ke inventaris.` });
   };
 
   const handleEditPart = (values: PartFormValues) => {
