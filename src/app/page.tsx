@@ -248,7 +248,7 @@ const Home: NextPage = () => {
         <h1 className="font-headline text-3xl font-bold">Manajemen Inventaris</h1>
         <div className="flex gap-2">
           <Button onClick={() => setIsTransactionFormOpen(true)}>
-            <ArrowRightLeft className="mr-2 h-5 w-5" /> Buat Transaksi Keluar
+            <ArrowRightLeft className="mr-2 h-5 w-5" /> barang keluar
           </Button>
           <Button onClick={() => { setEditingPart(undefined); setIsPartFormOpen(true); }}>
             <PlusCircle className="mr-2 h-5 w-5" /> Tambah Suku Cadang
