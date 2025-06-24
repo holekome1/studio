@@ -68,17 +68,21 @@ const Home: NextPage = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const storedParts = localStorage.getItem("motorparts");
-    const storedTransactions = localStorage.getItem("motorparts_transaction_records");
-    if (storedParts) {
-      setParts(JSON.parse(storedParts));
-    } else {
+    setIsLoading(true);
+    try {
+      const storedParts = localStorage.getItem("motorparts");
+      setParts(storedParts ? JSON.parse(storedParts) : initialPartsData);
+
+      const storedTransactions = localStorage.getItem("motorparts_transaction_records");
+      setTransactionRecords(storedTransactions ? JSON.parse(storedTransactions) : []);
+    } catch (error) {
+      console.error("Error loading data from localStorage:", error);
+      // Fallback to initial data if parsing fails
       setParts(initialPartsData);
+      setTransactionRecords([]);
+    } finally {
+      setIsLoading(false);
     }
-    if (storedTransactions) {
-        setTransactionRecords(JSON.parse(storedTransactions));
-    }
-    setIsLoading(false);
   }, []);
 
   useEffect(() => {
