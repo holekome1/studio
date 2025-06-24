@@ -5,6 +5,7 @@ export interface Part {
   price: number;
   storageLocation: string;
   category: PartCategory;
+  minStock: number;
 }
 
 export const partCategories = [
@@ -20,3 +21,12 @@ export const partCategories = [
 ] as const;
 
 export type PartCategory = (typeof partCategories)[number];
+
+export interface Transaction {
+  id: string;
+  partId: string;
+  partName: string;
+  quantityChange: number;
+  type: 'in' | 'out';
+  timestamp: number;
+}

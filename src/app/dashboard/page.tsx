@@ -1,0 +1,91 @@
+
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { ChartTooltipContent, ChartContainer } from "@/components/ui/chart";
+import type { Transaction } from "@/types";
+import { Package } from "lucide-react";
+
+interface ChartData {
+  name: string;
+  total: number;
+}
+
+const chartConfig = {
+  total: {
+    label: "Jumlah Keluar",
+    color: "hsl(var(--primary))",
+  },
+};
+
+export default function DashboardPage() {
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+
+  useEffect(() => {
+    const storedTransactions = localStorage.getItem("motorparts_transactions");
+    if (storedTransactions) {
+      setTransactions(JSON.parse(storedTransactions));
+    }
+  }, []);
+
+  const outgoingItemsData = useMemo<ChartData[]>(() => {
+    const itemCounts = new Map<string, number>();
+
+    transactions
+      .filter((t) => t.type === 'out')
+      .forEach((t) => {
+        const currentCount = itemCounts.get(t.partName) || 0;
+        itemCounts.set(t.partName, currentCount + t.quantityChange);
+      });
+
+    return Array.from(itemCounts.entries())
+      .map(([name, total]) => ({ name, total }))
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 10); // Top 10 items
+  }, [transactions]);
+
+
+  return (
+    <div className="space-y-6">
+      <h1 className="font-headline text-3xl font-bold">Dasbor Statistik</h1>
+      <Card>
+        <CardHeader>
+          <CardTitle>Barang Sering Keluar</CardTitle>
+          <CardDescription>10 suku cadang yang paling sering keluar dari gudang.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {outgoingItemsData.length > 0 ? (
+            <ChartContainer config={chartConfig} className="min-h-[200px] w-full h-[450px]">
+                <BarChart data={outgoingItemsData} margin={{ top: 5, right: 20, left: -10, bottom: 80 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis
+                    dataKey="name"
+                    angle={-45}
+                    textAnchor="end"
+                    height={100}
+                    interval={0}
+                    tick={{ fontSize: 12, fill: "hsl(var(--foreground))" }}
+                    stroke="hsl(var(--border))"
+                  />
+                  <YAxis allowDecimals={false} stroke="hsl(var(--border))" tick={{fill: "hsl(var(--foreground))"}}/>
+                  <Tooltip
+                    cursor={{ fill: 'hsl(var(--muted))' }}
+                    content={<ChartTooltipContent indicator="dot" />}
+                  />
+                  <Bar dataKey="total" fill="var(--color-total)" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ChartContainer>
+          ) : (
+             <div className="flex flex-col items-center justify-center p-10 text-center h-[400px]">
+                <Package className="mb-4 h-16 w-16 text-muted-foreground" />
+                <h3 className="text-xl font-semibold text-muted-foreground">Belum Ada Data Transaksi</h3>
+                <p className="text-muted-foreground">Data akan muncul di sini setelah ada barang yang keluar.</p>
+              </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

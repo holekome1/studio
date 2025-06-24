@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Part, PartCategory } from "@/types";
+import type { Part } from "@/types";
 import { partCategories } from "@/types";
 
 const formSchema = z.object({
@@ -31,6 +31,7 @@ const formSchema = z.object({
   price: z.coerce.number().min(0, "Harga tidak boleh negatif."),
   storageLocation: z.string().min(1, "Lokasi penyimpanan harus diisi."),
   category: z.enum(partCategories),
+  minStock: z.coerce.number().int().min(0, "Jumlah minimal tidak boleh negatif."),
 });
 
 type PartFormValues = z.infer<typeof formSchema>;
@@ -56,6 +57,7 @@ export function PartForm({
       price: initialData?.price || 0,
       storageLocation: initialData?.storageLocation || "",
       category: initialData?.category || partCategories[0],
+      minStock: initialData?.minStock || 0,
     },
   });
 
@@ -92,6 +94,21 @@ export function PartForm({
           />
           <FormField
             control={form.control}
+            name="minStock"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Stok Minimum</FormLabel>
+                <FormControl>
+                  <Input type="number" placeholder="cth., 5" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+
+         <FormField
+            control={form.control}
             name="price"
             render={({ field }) => (
               <FormItem>
@@ -103,7 +120,6 @@ export function PartForm({
               </FormItem>
             )}
           />
-        </div>
 
         <FormField
           control={form.control}
