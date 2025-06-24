@@ -179,22 +179,23 @@ const Home: NextPage = () => {
       notes: 'Transaksi penjualan/keluar'
     });
 
-    // 2. Update part quantities
-    const newParts = [...parts];
-    let lowStockAlerts: string[] = [];
-
-    items.forEach(item => {
-      const partIndex = newParts.findIndex(p => p.id === item.partId);
-      if (partIndex !== -1) {
-        const newQuantity = newParts[partIndex].quantity - item.quantity;
-        newParts[partIndex].quantity = newQuantity;
-
-        if (newQuantity <= newParts[partIndex].minStock) {
-          lowStockAlerts.push(`${newParts[partIndex].name} (sisa ${newQuantity})`);
+    // 2. Update part quantities immutably
+    const lowStockAlerts: string[] = [];
+    const updatedParts = parts.map(part => {
+      const itemInTransaction = items.find(item => item.partId === part.id);
+      if (itemInTransaction) {
+        const newQuantity = part.quantity - itemInTransaction.quantity;
+        if (newQuantity <= part.minStock) {
+          lowStockAlerts.push(`${part.name} (sisa ${newQuantity})`);
         }
+        // Return a new object for the updated part
+        return { ...part, quantity: newQuantity };
       }
+      // Return the original part if no changes
+      return part;
     });
-    setParts(newParts);
+
+    setParts(updatedParts);
 
     // 3. Show toasts
     toast({ title: "Transaksi Berhasil", description: `${items.length} item telah dikeluarkan dari gudang.` });
