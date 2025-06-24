@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import type { NextPage } from "next";
 import { Button } from "@/components/ui/button";
 import {
@@ -63,6 +63,7 @@ const Home: NextPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("");
   const [locationFilter, setLocationFilter] = useState<string>("");
+  const hasLoaded = useRef(false);
 
   const { toast } = useToast();
 
@@ -77,16 +78,17 @@ const Home: NextPage = () => {
     if (storedTransactions) {
         setTransactionRecords(JSON.parse(storedTransactions));
     }
+    hasLoaded.current = true;
   }, []);
 
   useEffect(() => {
-    if (parts.length > 0) {
+    if (hasLoaded.current) {
       localStorage.setItem("motorparts", JSON.stringify(parts));
     }
   }, [parts]);
 
   useEffect(() => {
-    if (transactionRecords.length > 0 || localStorage.getItem("motorparts_transaction_records")) {
+    if (hasLoaded.current) {
         localStorage.setItem("motorparts_transaction_records", JSON.stringify(transactionRecords));
     }
   }, [transactionRecords]);
