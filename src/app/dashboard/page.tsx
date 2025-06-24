@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ChartTooltipContent, ChartContainer } from "@/components/ui/chart";
-import type { Transaction } from "@/types";
+import type { TransactionRecord } from "@/types";
 import { Package } from "lucide-react";
 
 interface ChartData {
@@ -21,30 +21,32 @@ const chartConfig = {
 };
 
 export default function DashboardPage() {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactionRecords, setTransactionRecords] = useState<TransactionRecord[]>([]);
 
   useEffect(() => {
-    const storedTransactions = localStorage.getItem("motorparts_transactions");
+    const storedTransactions = localStorage.getItem("motorparts_transaction_records");
     if (storedTransactions) {
-      setTransactions(JSON.parse(storedTransactions));
+      setTransactionRecords(JSON.parse(storedTransactions));
     }
   }, []);
 
   const outgoingItemsData = useMemo<ChartData[]>(() => {
     const itemCounts = new Map<string, number>();
 
-    transactions
+    transactionRecords
       .filter((t) => t.type === 'out')
       .forEach((t) => {
-        const currentCount = itemCounts.get(t.partName) || 0;
-        itemCounts.set(t.partName, currentCount + t.quantityChange);
+        t.items.forEach(item => {
+          const currentCount = itemCounts.get(item.partName) || 0;
+          itemCounts.set(item.partName, currentCount + item.quantity);
+        })
       });
 
     return Array.from(itemCounts.entries())
       .map(([name, total]) => ({ name, total }))
       .sort((a, b) => b.total - a.total)
       .slice(0, 10); // Top 10 items
-  }, [transactions]);
+  }, [transactionRecords]);
 
 
   return (
@@ -80,7 +82,7 @@ export default function DashboardPage() {
           ) : (
              <div className="flex flex-col items-center justify-center p-10 text-center h-[400px]">
                 <Package className="mb-4 h-16 w-16 text-muted-foreground" />
-                <h3 className="text-xl font-semibold text-muted-foreground">Belum Ada Data Transaksi</h3>
+                <h3 className="text-xl font-semibold text-muted-foreground">Belum Ada Data Transaksi Keluar</h3>
                 <p className="text-muted-foreground">Data akan muncul di sini setelah ada barang yang keluar.</p>
               </div>
           )}

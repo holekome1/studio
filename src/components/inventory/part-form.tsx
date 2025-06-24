@@ -1,7 +1,6 @@
 
 "use client";
 
-import type * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -34,7 +33,7 @@ const formSchema = z.object({
   minStock: z.coerce.number().int().min(0, "Jumlah minimal tidak boleh negatif."),
 });
 
-type PartFormValues = z.infer<typeof formSchema>;
+export type PartFormValues = z.infer<typeof formSchema>;
 
 interface PartFormProps {
   onSubmit: (values: PartFormValues) => void;

@@ -22,11 +22,18 @@ export const partCategories = [
 
 export type PartCategory = (typeof partCategories)[number];
 
-export interface Transaction {
-  id: string;
+export interface TransactionItem {
   partId: string;
   partName: string;
-  quantityChange: number;
+  quantity: number;
+  price: number; // Price at the time of transaction
+}
+
+export interface TransactionRecord {
+  id: string; // e.g., 'TXN-20240715103000'
   type: 'in' | 'out';
+  items: TransactionItem[];
   timestamp: number;
+  totalAmount: number;
+  notes?: string;
 }

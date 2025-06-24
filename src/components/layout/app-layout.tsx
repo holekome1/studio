@@ -16,7 +16,7 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 import { Logo } from "@/components/icons/logo";
-import { LayoutDashboard, Package, LogOut } from "lucide-react";
+import { LayoutDashboard, Package, LogOut, Receipt } from "lucide-react";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -68,6 +68,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   <SidebarMenuButton isActive={pathname === "/"} tooltip="Inventaris">
                     <Package />
                     <span>Inventaris</span>
+                  </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
+               <SidebarMenuItem>
+                <Link href="/transactions" legacyBehavior passHref>
+                  <SidebarMenuButton isActive={pathname === "/transactions"} tooltip="Transaksi">
+                    <Receipt />
+                    <span>Transaksi</span>
                   </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>

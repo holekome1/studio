@@ -24,9 +24,11 @@ import {
 import { PartForm } from "@/components/inventory/part-form";
 import { PartTable } from "@/components/inventory/part-table";
 import { SearchFilterBar, ALL_CATEGORIES_VALUE, ALL_LOCATIONS_VALUE } from "@/components/inventory/search-filter-bar";
-import type { Part, Transaction } from "@/types";
+import type { Part, TransactionRecord, TransactionItem } from "@/types";
 import { useToast } from "@/hooks/use-toast";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, ArrowRightLeft } from "lucide-react";
+import { TransactionForm } from "@/components/inventory/transaction-form";
+import type { PartFormValues } from "@/components/inventory/part-form";
 
 const initialPartsData: Part[] = [
   { id: "1", name: "Spark Plug NGK CR7HSA", quantity: 50, price: 52500, storageLocation: "Rak A-1", category: "Engine Parts", minStock: 10 },
@@ -53,8 +55,9 @@ const initialPartsData: Part[] = [
 
 const Home: NextPage = () => {
   const [parts, setParts] = useState<Part[]>([]);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [transactionRecords, setTransactionRecords] = useState<TransactionRecord[]>([]);
   const [isPartFormOpen, setIsPartFormOpen] = useState(false);
+  const [isTransactionFormOpen, setIsTransactionFormOpen] = useState(false);
   const [editingPart, setEditingPart] = useState<Part | undefined>(undefined);
   const [partToDeleteId, setPartToDeleteId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -65,14 +68,14 @@ const Home: NextPage = () => {
 
   useEffect(() => {
     const storedParts = localStorage.getItem("motorparts");
-    const storedTransactions = localStorage.getItem("motorparts_transactions");
+    const storedTransactions = localStorage.getItem("motorparts_transaction_records");
     if (storedParts) {
       setParts(JSON.parse(storedParts));
     } else {
       setParts(initialPartsData);
     }
     if (storedTransactions) {
-        setTransactions(JSON.parse(storedTransactions));
+        setTransactionRecords(JSON.parse(storedTransactions));
     }
   }, []);
 
@@ -83,47 +86,57 @@ const Home: NextPage = () => {
   }, [parts]);
 
   useEffect(() => {
-    // Only write to localStorage if there are transactions to avoid empty array artifact
-    if (transactions.length > 0 || localStorage.getItem("motorparts_transactions")) {
-        localStorage.setItem("motorparts_transactions", JSON.stringify(transactions));
+    if (transactionRecords.length > 0 || localStorage.getItem("motorparts_transaction_records")) {
+        localStorage.setItem("motorparts_transaction_records", JSON.stringify(transactionRecords));
     }
-  }, [transactions]);
+  }, [transactionRecords]);
 
-  const addTransaction = (part: Part, oldQuantity: number) => {
-    const quantityChange = part.quantity - oldQuantity;
-    if (quantityChange === 0) return;
-
-    const newTransaction: Transaction = {
-      id: Date.now().toString(),
-      partId: part.id,
-      partName: part.name,
-      quantityChange: Math.abs(quantityChange),
-      type: quantityChange > 0 ? 'in' : 'out',
+  const createTransaction = (newTransaction: Omit<TransactionRecord, 'id' | 'timestamp' | 'totalAmount'> & { notes?: string }) => {
+    const totalAmount = newTransaction.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const fullTransaction: TransactionRecord = {
+      ...newTransaction,
+      id: `TXN-${Date.now()}`,
       timestamp: Date.now(),
+      totalAmount
     };
-    setTransactions(prev => [...prev, newTransaction]);
+    setTransactionRecords(prev => [...prev, fullTransaction]);
   };
   
-  const handleAddPart = (values: Omit<Part, "id">) => {
+  const handleAddPart = (values: PartFormValues) => {
     const newPart: Part = { ...values, id: Date.now().toString() };
     setParts((prev) => [...prev, newPart]);
-    addTransaction(newPart, 0);
+    
+    createTransaction({
+      type: 'in',
+      items: [{ partId: newPart.id, partName: newPart.name, quantity: newPart.quantity, price: newPart.price }],
+      notes: 'Suku cadang baru ditambahkan'
+    });
+
     setIsPartFormOpen(false);
     toast({ title: "Suku Cadang Ditambahkan", description: `${values.name} telah ditambahkan ke inventaris.` });
   };
 
-  const handleEditPart = (values: Omit<Part, "id" | "minStock"> & { minStock: number }) => {
+  const handleEditPart = (values: PartFormValues) => {
     if (!editingPart) return;
+    
     const oldPart = parts.find(p => p.id === editingPart.id);
-    const oldQuantity = oldPart ? oldPart.quantity : 0;
-
+    if (!oldPart) return;
+    
+    const oldQuantity = oldPart.quantity;
     const updatedPart: Part = { ...editingPart, ...values };
     
     setParts((prev) =>
       prev.map((p) => (p.id === editingPart.id ? updatedPart : p))
     );
 
-    addTransaction(updatedPart, oldQuantity);
+    const quantityChange = updatedPart.quantity - oldQuantity;
+    if (quantityChange !== 0) {
+      createTransaction({
+        type: quantityChange > 0 ? 'in' : 'out',
+        items: [{ partId: updatedPart.id, partName: updatedPart.name, quantity: Math.abs(quantityChange), price: updatedPart.price }],
+        notes: 'Penyesuaian stok manual'
+      });
+    }
     
     if (updatedPart.quantity <= updatedPart.minStock) {
         toast({
@@ -142,21 +155,58 @@ const Home: NextPage = () => {
     if (!partToDeleteId) return;
     const partToDelete = parts.find(p => p.id === partToDeleteId);
     if (!partToDelete) return;
-
-    const deletedTransaction: Transaction = {
-      id: Date.now().toString(),
-      partId: partToDelete.id,
-      partName: partToDelete.name,
-      quantityChange: partToDelete.quantity,
+    
+    createTransaction({
       type: 'out',
-      timestamp: Date.now(),
-    };
-    setTransactions(prev => [...prev, deletedTransaction]);
+      items: [{ partId: partToDelete.id, partName: partToDelete.name, quantity: partToDelete.quantity, price: partToDelete.price }],
+      notes: `Suku cadang ${partToDelete.name} dihapus`
+    });
     
     setParts((prev) => prev.filter((p) => p.id !== partToDeleteId));
     setPartToDeleteId(null);
     toast({ title: "Suku Cadang Dihapus", description: `${partToDelete.name} telah dihapus dari inventaris.`, variant: "destructive" });
   };
+
+  const handleCreateTransaction = (items: TransactionItem[]) => {
+    if (items.length === 0) return;
+
+    // 1. Create transaction record
+    createTransaction({
+      type: 'out',
+      items: items,
+      notes: 'Transaksi penjualan/keluar'
+    });
+
+    // 2. Update part quantities
+    const newParts = [...parts];
+    let lowStockAlerts: string[] = [];
+
+    items.forEach(item => {
+      const partIndex = newParts.findIndex(p => p.id === item.partId);
+      if (partIndex !== -1) {
+        const newQuantity = newParts[partIndex].quantity - item.quantity;
+        newParts[partIndex].quantity = newQuantity;
+
+        if (newQuantity <= newParts[partIndex].minStock) {
+          lowStockAlerts.push(`${newParts[partIndex].name} (sisa ${newQuantity})`);
+        }
+      }
+    });
+    setParts(newParts);
+
+    // 3. Show toasts
+    toast({ title: "Transaksi Berhasil", description: `${items.length} item telah dikeluarkan dari gudang.` });
+    if(lowStockAlerts.length > 0) {
+       toast({
+            title: "Stok Menipis!",
+            description: `Beberapa stok menipis: ${lowStockAlerts.join(', ')}.`,
+            variant: "destructive",
+            duration: 5000
+        });
+    }
+
+    setIsTransactionFormOpen(false);
+  }
 
   const openEditForm = (part: Part) => {
     setEditingPart(part);
@@ -191,11 +241,16 @@ const Home: NextPage = () => {
 
   return (
     <div className="container mx-auto py-2">
-      <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+      <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center sm:gap-2">
         <h1 className="font-headline text-3xl font-bold">Manajemen Inventaris</h1>
-        <Button onClick={() => { setEditingPart(undefined); setIsPartFormOpen(true); }}>
-          <PlusCircle className="mr-2 h-5 w-5" /> Tambah Suku Cadang Baru
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setIsTransactionFormOpen(true)}>
+            <ArrowRightLeft className="mr-2 h-5 w-5" /> Buat Transaksi Keluar
+          </Button>
+          <Button onClick={() => { setEditingPart(undefined); setIsPartFormOpen(true); }}>
+            <PlusCircle className="mr-2 h-5 w-5" /> Tambah Suku Cadang
+          </Button>
+        </div>
       </div>
 
       <SearchFilterBar
@@ -210,6 +265,7 @@ const Home: NextPage = () => {
 
       <PartTable parts={filteredParts} onEdit={openEditForm} onDelete={openDeleteConfirm} />
 
+      {/* Part Add/Edit Dialog */}
       <Dialog open={isPartFormOpen} onOpenChange={setIsPartFormOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
@@ -218,7 +274,6 @@ const Home: NextPage = () => {
             </DialogTitle>
             {editingPart && <DialogDescription>Perbarui detail untuk {editingPart.name}.</DialogDescription>}
             {!editingPart && <DialogDescription>Masukkan detail untuk suku cadang baru.</DialogDescription>}
-            
           </DialogHeader>
           <div className="mt-4">
             <PartForm
@@ -230,6 +285,24 @@ const Home: NextPage = () => {
           </div>
         </DialogContent>
       </Dialog>
+      
+      {/* Outgoing Transaction Dialog */}
+      <Dialog open={isTransactionFormOpen} onOpenChange={setIsTransactionFormOpen}>
+        <DialogContent className="sm:max-w-2xl">
+           <DialogHeader>
+             <DialogTitle className="font-headline text-2xl">Buat Transaksi Keluar</DialogTitle>
+             <DialogDescription>Pilih suku cadang dan jumlah yang akan dikeluarkan dari inventaris.</DialogDescription>
+           </DialogHeader>
+            <div className="mt-4">
+              <TransactionForm
+                parts={parts}
+                onSubmit={handleCreateTransaction}
+                onCancel={() => setIsTransactionFormOpen(false)}
+              />
+            </div>
+        </DialogContent>
+      </Dialog>
+
 
       <AlertDialog open={!!partToDeleteId} onOpenChange={() => setPartToDeleteId(null)}>
         <AlertDialogContent>
