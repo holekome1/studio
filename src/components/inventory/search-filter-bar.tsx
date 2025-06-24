@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search, Filter } from "lucide-react";
-import { पार्टCategories } from "@/types";
+import { partCategories } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 
 export const ALL_CATEGORIES_VALUE = "__ALL_CATEGORIES__";
@@ -58,7 +58,7 @@ export function SearchFilterBar({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={ALL_CATEGORIES_VALUE}>All Categories</SelectItem>
-              {पार्टCategories.map((category) => (
+              {partCategories.map((category) => (
                 <SelectItem key={category} value={category}>
                   {category}
                 </SelectItem>

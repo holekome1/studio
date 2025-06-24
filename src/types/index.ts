@@ -7,7 +7,7 @@ export interface Part {
   category: PartCategory;
 }
 
-export const पार्टCategories = [
+export const partCategories = [
   "Engine Parts",
   "Electrical Components",
   "Body & Frame",
@@ -19,4 +19,4 @@ export const पार्टCategories = [
   "Other",
 ] as const;
 
-export type PartCategory = (typeof पार्टCategories)[number];
+export type PartCategory = (typeof partCategories)[number];
