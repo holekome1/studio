@@ -63,7 +63,7 @@ export function PartTable({ parts, onEdit, onDelete, userRole }: PartTableProps)
                   <TableHead className="text-right">Jumlah</TableHead>
                   <TableHead className="text-right">Harga</TableHead>
                   <TableHead>Lokasi</TableHead>
-                  <TableHead className="text-right">Aksi</TableHead>
+                  {userRole === 'admin' && <TableHead className="text-right">Aksi</TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -94,9 +94,8 @@ export function PartTable({ parts, onEdit, onDelete, userRole }: PartTableProps)
                         {formatRupiah(part.price)}
                       </TableCell>
                       <TableCell>{part.storageLocation}</TableCell>
-                      <TableCell className="text-right space-x-2">
-                        {userRole === 'admin' && (
-                           <>
+                      {userRole === 'admin' && (
+                         <TableCell className="text-right space-x-2">
                             <Button
                               variant="ghost"
                               size="icon"
@@ -114,9 +113,8 @@ export function PartTable({ parts, onEdit, onDelete, userRole }: PartTableProps)
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
-                           </>
-                        )}
-                      </TableCell>
+                         </TableCell>
+                      )}
                     </TableRow>
                   );
                 })}

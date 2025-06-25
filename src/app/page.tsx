@@ -30,29 +30,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { PlusCircle, ArrowRightLeft } from "lucide-react";
 import { TransactionForm } from "@/components/inventory/transaction-form";
 import type { PartFormValues } from "@/components/inventory/part-form";
-
-const initialPartsData: Part[] = [
-  { id: "1", name: "Spark Plug NGK CR7HSA", quantity: 50, price: 52500, storageLocation: "Rak A-1", category: "Engine Parts", minStock: 10 },
-  { id: "2", name: "Oil Filter Honda OEM", quantity: 30, price: 134850, storageLocation: "Rak B-2", category: "Engine Parts", minStock: 5 },
-  { id: "3", name: "Brake Pads Front Set", quantity: 25, price: 375000, storageLocation: "Rak C-5", category: "Braking System", minStock: 10 },
-  { id: "4", name: "LED Headlight Bulb H4", quantity: 8, price: 299250, storageLocation: "Rak Elektrikal A-1", category: "Electrical Components", minStock: 5 },
-  { id: "5", name: "Chain Lube Motul C2+", quantity: 40, price: 187500, storageLocation: "Rak Cairan 1", category: "Fluids & Chemicals", minStock: 15 },
-  { id: "6", name: "Motorcycle Cover Waterproof", quantity: 10, price: 525000, storageLocation: "Kotak Aksesoris", category: "Accessories", minStock: 2 },
-  { id: "7", name: "Handlebar Grips Yamaha", quantity: 20, price: 236250, storageLocation: "Rak D-3", category: "Body & Frame", minStock: 5 },
-  { id: "8", name: "Tire Pirelli Diablo Rosso III", quantity: 5, price: 2250000, storageLocation: "Rak Ban 2", category: "Wheels & Tires", minStock: 4 },
-  { id: "9", name: "Air Filter Twin Air", quantity: 18, price: 334500, storageLocation: "Rak A-2", category: "Engine Parts", minStock: 5 },
-  { id: "10", name: "Battery Yuasa YTZ10S", quantity: 12, price: 1432500, storageLocation: "Rak Elektrikal B-4", category: "Electrical Components", minStock: 3 },
-  { id: "11", name: "Kabel Rem Belakang", quantity: 22, price: 45000, storageLocation: "Gudang Kabel", category: "Braking System", minStock: 10 },
-  { id: "12", name: "Bohlam Sein (1 pasang)", quantity: 3, price: 25000, storageLocation: "Rak Bohlam", category: "Electrical Components", minStock: 10 },
-  { id: "13", name: "Spion Standar Kanan", quantity: 15, price: 75000, storageLocation: "Lemari Spion", category: "Body & Frame", minStock: 5 },
-  { id: "14", name: "Oli Mesin Federal Oil", quantity: 30, price: 65000, storageLocation: "Rak Oli", category: "Fluids & Chemicals", minStock: 12 },
-  { id: "15", name: "Kampas Kopling Set", quantity: 10, price: 250000, storageLocation: "Kotak Kopling", category: "Engine Parts", minStock: 5 },
-  { id: "16", name: "Gear Set SSS 428", quantity: 8, price: 450000, storageLocation: "Lemari Gear", category: "Engine Parts", minStock: 3},
-  { id: "17", name: "Shockbreaker Belakang YSS", quantity: 6, price: 850000, storageLocation: "Rak Suspensi Heavy Duty", category: "Suspension", minStock: 2},
-  { id: "18", name: "Klakson Denso", quantity: 25, price: 95000, storageLocation: "Laci Klakson", category: "Electrical Components", minStock: 5},
-  { id: "19", name: "Jas Hujan Axio", quantity: 12, price: 220000, storageLocation: "Gantungan Jas Hujan", category: "Accessories", minStock: 5},
-  { id: "20", name: "Pelumas Rantai Top1", quantity: 4, price: 35000, storageLocation: "Area Perawatan", category: "Fluids & Chemicals", minStock: 5},
-];
+import { Badge } from "@/components/ui/badge";
 
 const Home: NextPage = () => {
   const [parts, setParts] = useState<Part[]>([]);
@@ -68,36 +46,68 @@ const Home: NextPage = () => {
 
   const { toast } = useToast();
   const { user } = useAuth();
-
-  useEffect(() => {
+  
+  const loadDataFromStorage = () => {
     setIsLoading(true);
     try {
       const storedParts = localStorage.getItem("motorparts");
+      const initialPartsData: Part[] = [
+          { id: "1", name: "Spark Plug NGK CR7HSA", quantity: 50, price: 52500, storageLocation: "Rak A-1", category: "Engine Parts", minStock: 10 },
+          { id: "2", name: "Oil Filter Honda OEM", quantity: 30, price: 134850, storageLocation: "Rak B-2", category: "Engine Parts", minStock: 5 },
+          { id: "3", name: "Brake Pads Front Set", quantity: 25, price: 375000, storageLocation: "Rak C-5", category: "Braking System", minStock: 10 },
+          { id: "4", name: "LED Headlight Bulb H4", quantity: 8, price: 299250, storageLocation: "Rak Elektrikal A-1", category: "Electrical Components", minStock: 5 },
+          { id: "5", name: "Chain Lube Motul C2+", quantity: 40, price: 187500, storageLocation: "Rak Cairan 1", category: "Fluids & Chemicals", minStock: 15 },
+          { id: "6", name: "Motorcycle Cover Waterproof", quantity: 10, price: 525000, storageLocation: "Kotak Aksesoris", category: "Accessories", minStock: 2 },
+          { id: "7", name: "Handlebar Grips Yamaha", quantity: 20, price: 236250, storageLocation: "Rak D-3", category: "Body & Frame", minStock: 5 },
+          { id: "8", name: "Tire Pirelli Diablo Rosso III", quantity: 5, price: 2250000, storageLocation: "Rak Ban 2", category: "Wheels & Tires", minStock: 4 },
+          { id: "9", name: "Air Filter Twin Air", quantity: 18, price: 334500, storageLocation: "Rak A-2", category: "Engine Parts", minStock: 5 },
+          { id: "10", name: "Battery Yuasa YTZ10S", quantity: 12, price: 1432500, storageLocation: "Rak Elektrikal B-4", category: "Electrical Components", minStock: 3 },
+          { id: "11", name: "Kabel Rem Belakang", quantity: 22, price: 45000, storageLocation: "Gudang Kabel", category: "Braking System", minStock: 10 },
+          { id: "12", name: "Bohlam Sein (1 pasang)", quantity: 3, price: 25000, storageLocation: "Rak Bohlam", category: "Electrical Components", minStock: 10 },
+          { id: "13", name: "Spion Standar Kanan", quantity: 15, price: 75000, storageLocation: "Lemari Spion", category: "Body & Frame", minStock: 5 },
+          { id: "14", name: "Oli Mesin Federal Oil", quantity: 30, price: 65000, storageLocation: "Rak Oli", category: "Fluids & Chemicals", minStock: 12 },
+          { id: "15", name: "Kampas Kopling Set", quantity: 10, price: 250000, storageLocation: "Kotak Kopling", category: "Engine Parts", minStock: 5 },
+          { id: "16", name: "Gear Set SSS 428", quantity: 8, price: 450000, storageLocation: "Lemari Gear", category: "Engine Parts", minStock: 3},
+          { id: "17", name: "Shockbreaker Belakang YSS", quantity: 6, price: 850000, storageLocation: "Rak Suspensi Heavy Duty", category: "Suspension", minStock: 2},
+          { id: "18", name: "Klakson Denso", quantity: 25, price: 95000, storageLocation: "Laci Klakson", category: "Electrical Components", minStock: 5},
+          { id: "19", name: "Jas Hujan Axio", quantity: 12, price: 220000, storageLocation: "Gantungan Jas Hujan", category: "Accessories", minStock: 5},
+          { id: "20", name: "Pelumas Rantai Top1", quantity: 4, price: 35000, storageLocation: "Area Perawatan", category: "Fluids & Chemicals", minStock: 5},
+      ];
       setParts(storedParts ? JSON.parse(storedParts) : initialPartsData);
 
       const storedTransactions = localStorage.getItem("motorparts_transaction_records");
       setTransactionRecords(storedTransactions ? JSON.parse(storedTransactions) : []);
     } catch (error) {
       console.error("Error loading data from localStorage:", error);
-      // Fallback to initial data if parsing fails
-      setParts(initialPartsData);
-      setTransactionRecords([]);
+      toast({
+        title: "Gagal Memuat Data",
+        description: "Terjadi kesalahan saat memuat data dari penyimpanan lokal.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
+  };
+  
+  useEffect(() => {
+    loadDataFromStorage();
   }, []);
 
-  useEffect(() => {
-    if (!isLoading) {
-      localStorage.setItem("motorparts", JSON.stringify(parts));
-    }
-  }, [parts, isLoading]);
 
-  useEffect(() => {
-    if (!isLoading) {
-      localStorage.setItem("motorparts_transaction_records", JSON.stringify(transactionRecords));
+  const saveDataToStorage = (newParts: Part[], newTransactions: TransactionRecord[]) => {
+    try {
+      localStorage.setItem("motorparts", JSON.stringify(newParts));
+      localStorage.setItem("motorparts_transaction_records", JSON.stringify(newTransactions));
+    } catch (error) {
+      console.error("Error saving data to localStorage:", error);
+      toast({
+        title: "Gagal Menyimpan Data",
+        description: "Tidak dapat menyimpan perubahan ke penyimpanan lokal.",
+        variant: "destructive",
+      });
     }
-  }, [transactionRecords, isLoading]);
+  };
+
 
   const createTransaction = (newTransaction: Omit<TransactionRecord, 'id' | 'timestamp' | 'totalAmount'> & { notes?: string }) => {
     const totalAmount = newTransaction.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -107,7 +117,12 @@ const Home: NextPage = () => {
       timestamp: Date.now(),
       totalAmount
     };
-    setTransactionRecords(prev => [...prev, fullTransaction]);
+    
+    setTransactionRecords(prev => {
+      const updatedTransactions = [...prev, fullTransaction];
+      saveDataToStorage(parts, updatedTransactions);
+      return updatedTransactions;
+    });
   };
   
   const handleAddPart = (values: PartFormValues) => {
@@ -115,53 +130,45 @@ const Home: NextPage = () => {
       (p) => p.name.trim().toLowerCase() === values.name.trim().toLowerCase()
     );
 
+    let updatedParts;
     if (existingPart) {
-      // Part exists, so we update the quantity and other details
-      setParts(
-        parts.map((p) =>
-          p.id === existingPart.id
-            ? {
-                ...p,
-                quantity: p.quantity + values.quantity,
-                price: values.price, // Update price to latest
-                storageLocation: values.storageLocation,
-                category: values.category,
-                minStock: values.minStock,
-              }
-            : p
-        )
+      updatedParts = parts.map((p) =>
+        p.id === existingPart.id
+          ? {
+              ...p,
+              quantity: p.quantity + values.quantity,
+              price: values.price,
+              storageLocation: values.storageLocation,
+              category: values.category,
+              minStock: values.minStock,
+            }
+          : p
       );
-
-      // Create a transaction for the stock addition
       createTransaction({
         type: 'in',
         items: [{ partId: existingPart.id, partName: existingPart.name, quantity: values.quantity, price: values.price }],
         notes: `Penambahan stok untuk barang yang sudah ada: ${existingPart.name}`,
       });
-
       toast({
         title: "Stok Diperbarui",
         description: `Jumlah untuk ${existingPart.name} telah ditambahkan.`,
       });
-
     } else {
-      // Part is new, add it to the inventory
       const newPart: Part = { ...values, id: Date.now().toString() };
-      setParts((prev) => [...prev, newPart]);
-
-      // Create a transaction for the new part
+      updatedParts = [...parts, newPart];
       createTransaction({
         type: 'in',
         items: [{ partId: newPart.id, partName: newPart.name, quantity: newPart.quantity, price: newPart.price }],
         notes: 'Suku cadang baru ditambahkan',
       });
-
       toast({
         title: "Suku Cadang Ditambahkan",
         description: `${values.name} telah ditambahkan ke inventaris.`,
       });
     }
 
+    setParts(updatedParts);
+    saveDataToStorage(updatedParts, transactionRecords);
     setIsPartFormOpen(false);
   };
 
@@ -174,9 +181,8 @@ const Home: NextPage = () => {
     const oldQuantity = oldPart.quantity;
     const updatedPart: Part = { ...editingPart, ...values };
     
-    setParts((prev) =>
-      prev.map((p) => (p.id === editingPart.id ? updatedPart : p))
-    );
+    const updatedParts = parts.map((p) => (p.id === editingPart.id ? updatedPart : p));
+    setParts(updatedParts);
 
     const quantityChange = updatedPart.quantity - oldQuantity;
     if (quantityChange !== 0) {
@@ -185,6 +191,8 @@ const Home: NextPage = () => {
         items: [{ partId: updatedPart.id, partName: updatedPart.name, quantity: Math.abs(quantityChange), price: updatedPart.price }],
         notes: 'Penyesuaian stok manual'
       });
+    } else {
+       saveDataToStorage(updatedParts, transactionRecords);
     }
     
     if (updatedPart.quantity <= updatedPart.minStock) {
@@ -211,7 +219,10 @@ const Home: NextPage = () => {
       notes: `Suku cadang ${partToDelete.name} dihapus`
     });
     
-    setParts((prev) => prev.filter((p) => p.id !== partToDeleteId));
+    const updatedParts = parts.filter((p) => p.id !== partToDeleteId);
+    setParts(updatedParts);
+    saveDataToStorage(updatedParts, transactionRecords);
+    
     setPartToDeleteId(null);
     toast({ title: "Suku Cadang Dihapus", description: `${partToDelete.name} telah dihapus dari inventaris.`, variant: "destructive" });
   };
@@ -219,32 +230,31 @@ const Home: NextPage = () => {
   const handleCreateTransaction = (items: TransactionItem[]) => {
     if (items.length === 0) return;
 
-    // 1. Create transaction record
-    createTransaction({
-      type: 'out',
-      items: items,
-      notes: 'Transaksi penjualan/keluar'
-    });
-
-    // 2. Update part quantities immutably
+    let currentParts = [...parts];
     const lowStockAlerts: string[] = [];
-    const updatedParts = parts.map(part => {
+
+    const updatedParts = currentParts.map(part => {
       const itemInTransaction = items.find(item => item.partId === part.id);
       if (itemInTransaction) {
         const newQuantity = part.quantity - itemInTransaction.quantity;
         if (newQuantity <= part.minStock) {
           lowStockAlerts.push(`${part.name} (sisa ${newQuantity})`);
         }
-        // Return a new object for the updated part
         return { ...part, quantity: newQuantity };
       }
-      // Return the original part if no changes
       return part;
     });
 
     setParts(updatedParts);
 
-    // 3. Show toasts
+    createTransaction({
+      type: 'out',
+      items: items,
+      notes: 'Transaksi penjualan/keluar'
+    });
+    
+    saveDataToStorage(updatedParts, transactionRecords);
+
     toast({ title: "Transaksi Berhasil", description: `${items.length} item telah dikeluarkan dari gudang.` });
     if(lowStockAlerts.length > 0) {
        toast({
@@ -254,7 +264,6 @@ const Home: NextPage = () => {
             duration: 5000
         });
     }
-
     setIsTransactionFormOpen(false);
   }
 
@@ -292,7 +301,14 @@ const Home: NextPage = () => {
   return (
     <div className="container mx-auto py-2">
       <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center sm:gap-2">
-        <h1 className="font-headline text-3xl font-bold">Manajemen Inventaris</h1>
+        <div className="flex items-center gap-4">
+          <h1 className="font-headline text-3xl font-bold">Manajemen Inventaris</h1>
+           {user?.role === 'manajer' && (
+              <Badge variant="outline" className="border-accent text-accent-foreground text-sm font-semibold">
+                Mode Hanya Lihat
+              </Badge>
+            )}
+        </div>
         <div className="flex gap-2">
           {user?.role !== 'manajer' && (
             <>
