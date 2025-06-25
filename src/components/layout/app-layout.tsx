@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -63,6 +64,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </SidebarHeader>
           <SidebarContent>
             <SidebarMenu>
+               <SidebarMenuItem>
+                <Link href="/dashboard">
+                  <SidebarMenuButton isActive={pathname === "/dashboard"} tooltip="Dasbor">
+                    <LayoutDashboard />
+                    <span>Dasbor</span>
+                  </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
               <SidebarMenuItem>
                 <Link href="/">
                   <SidebarMenuButton isActive={pathname === "/"} tooltip="Inventaris">
@@ -76,14 +85,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   <SidebarMenuButton isActive={pathname === "/transactions"} tooltip="Transaksi">
                     <Receipt />
                     <span>Transaksi</span>
-                  </SidebarMenuButton>
-                </Link>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <Link href="/dashboard">
-                  <SidebarMenuButton isActive={pathname === "/dashboard"} tooltip="Dasbor">
-                    <LayoutDashboard />
-                    <span>Dasbor</span>
                   </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
