@@ -108,7 +108,7 @@ export default function LoginPage() {
               <Logo className="h-8 w-8 text-primary-foreground" />
             </div>
             <CardTitle>GUDANG MAJU SEJAHTRA</CardTitle>
-            <CardDescription>Gunakan akun Firebase Anda. Belum punya? Buat akun untuk peran 'Admin', 'Kepala Gudang', dan 'Manajer' untuk mencoba semua fitur.</CardDescription>
+            <CardDescription>Gunakan akun Firebase Anda. Belum punya? Buat akun untuk mencoba semua fitur. Contoh email: admin@contoh.com, kepala@contoh.com, dll.</CardDescription>
           </CardHeader>
           <form onSubmit={handleLogin}>
             <CardContent className="space-y-4">
@@ -117,7 +117,7 @@ export default function LoginPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="email@contoh.com"
+                  placeholder="cth., admin@contoh.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -169,7 +169,7 @@ export default function LoginPage() {
                   type="email"
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
-                  placeholder="Masukkan email"
+                  placeholder="cth., namaanda@contoh.com"
                   disabled={isLoading}
                 />
               </div>
