@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
@@ -16,6 +16,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Logo } from "@/components/icons/logo";
 import type { UserRole } from "@/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
 
 
 export default function LoginPage() {
@@ -25,12 +27,19 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isConfigInvalid, setIsConfigInvalid] = useState(false);
 
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [selectedRole, setSelectedRole] = useState<UserRole>('admin');
+
+  useEffect(() => {
+    if (auth.config.apiKey === 'YOUR_API_KEY') {
+        setIsConfigInvalid(true);
+    }
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,7 +54,10 @@ export default function LoginPage() {
     } catch (error: any) {
       console.error("Login error:", error);
       let description = "Terjadi kesalahan. Silakan coba lagi.";
-      if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+      if (error.code === 'auth/invalid-api-key') {
+        description = "Konfigurasi Firebase tidak valid. Periksa file src/lib/firebase.ts.";
+        setIsConfigInvalid(true);
+      } else if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
         description = "Email atau kata sandi salah.";
       }
       toast({
@@ -88,7 +100,10 @@ export default function LoginPage() {
     } catch (error: any) {
         console.error("Registration error:", error);
         let description = "Terjadi kesalahan saat pendaftaran.";
-        if (error.code === 'auth/email-already-in-use') {
+        if (error.code === 'auth/invalid-api-key') {
+            description = "Konfigurasi Firebase tidak valid. Periksa file src/lib/firebase.ts.";
+            setIsConfigInvalid(true);
+        } else if (error.code === 'auth/email-already-in-use') {
             description = "Email ini sudah terdaftar.";
         } else if (error.code === 'auth/weak-password') {
             description = "Kata sandi terlalu lemah. Minimal 6 karakter.";
@@ -102,54 +117,65 @@ export default function LoginPage() {
   return (
     <>
       <div className="flex min-h-screen items-center justify-center bg-background p-4">
-        <Card className="w-full max-w-sm shadow-2xl">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary">
-              <Logo className="h-8 w-8 text-primary-foreground" />
-            </div>
-            <CardTitle>GUDANG MAJU SEJAHTRA</CardTitle>
-            <CardDescription>Gunakan akun Firebase Anda. Belum punya? Buat akun untuk mencoba semua fitur. Contoh email: admin@contoh.com, kepala@contoh.com, dll.</CardDescription>
-          </CardHeader>
-          <form onSubmit={handleLogin}>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="cth., admin@contoh.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  disabled={isLoading}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Kata Sandi</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  disabled={isLoading}
-                />
-              </div>
-            </CardContent>
-            <CardFooter className="flex-col gap-4">
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Memproses..." : "Masuk"}
-              </Button>
-            </CardFooter>
-          </form>
-           <div className="p-6 pt-0 text-center text-sm">
-              Belum punya akun?{' '}
-              <Button variant="link" className="p-0 h-auto" onClick={() => setIsRegisterOpen(true)}>
-                Buat akun baru
-              </Button>
-            </div>
-        </Card>
+        <div className="w-full max-w-sm">
+            {isConfigInvalid && (
+                <Alert variant="destructive" className="mb-4">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Konfigurasi Firebase Diperlukan</AlertTitle>
+                    <AlertDescription>
+                        Kunci API tidak valid. Harap perbarui <code>src/lib/firebase.ts</code> dengan kredensial dari proyek Firebase Anda.
+                    </AlertDescription>
+                </Alert>
+            )}
+            <Card className="shadow-2xl">
+              <CardHeader className="text-center">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary">
+                  <Logo className="h-8 w-8 text-primary-foreground" />
+                </div>
+                <CardTitle>GUDANG MAJU SEJAHTRA</CardTitle>
+                <CardDescription>Gunakan akun Firebase Anda. Belum punya? Buat akun untuk mencoba semua fitur. Contoh email: admin@contoh.com, kepala@contoh.com, dll.</CardDescription>
+              </CardHeader>
+              <form onSubmit={handleLogin}>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="cth., admin@contoh.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      disabled={isLoading}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Kata Sandi</Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      disabled={isLoading}
+                    />
+                  </div>
+                </CardContent>
+                <CardFooter className="flex-col gap-4">
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? "Memproses..." : "Masuk"}
+                  </Button>
+                </CardFooter>
+              </form>
+               <div className="p-6 pt-0 text-center text-sm">
+                  Belum punya akun?{' '}
+                  <Button variant="link" className="p-0 h-auto" onClick={() => setIsRegisterOpen(true)}>
+                    Buat akun baru
+                  </Button>
+                </div>
+            </Card>
+        </div>
       </div>
       
       <Dialog open={isRegisterOpen} onOpenChange={setIsRegisterOpen}>
