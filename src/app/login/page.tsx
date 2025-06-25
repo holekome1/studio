@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Logo } from "@/components/icons/logo";
+import type { UserRole } from "@/types";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -17,19 +18,27 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  const users: Record<string, { password: string, role: UserRole }> = {
+    admin: { password: 'password', role: 'admin' },
+    kepala: { password: 'password', role: 'kepala' },
+    manajer: { password: 'password', role: 'manajer' },
+  };
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     // Simulate API call
     setTimeout(() => {
-      if (username === "admin" && password === "password") {
-        localStorage.setItem("isLoggedIn", "true");
+      const user = users[username.toLowerCase()];
+      if (user && user.password === password) {
+        const currentUser = { username: username.toLowerCase(), role: user.role };
+        localStorage.setItem("currentUser", JSON.stringify(currentUser));
         toast({
           title: "Login Berhasil",
-          description: "Selamat datang kembali!",
+          description: `Selamat datang, ${currentUser.username}!`,
         });
-        router.push("/");
+        router.push("/dashboard");
       } else {
         toast({
           title: "Login Gagal",
@@ -58,7 +67,7 @@ export default function LoginPage() {
               <Input
                 id="username"
                 type="text"
-                placeholder="admin"
+                placeholder="admin / kepala / manajer"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required

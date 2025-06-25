@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -18,32 +18,25 @@ import {
 } from "@/components/ui/sidebar";
 import { Logo } from "@/components/icons/logo";
 import { LayoutDashboard, Package, LogOut, Receipt } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [isClient, setIsClient] = useState(false);
+  const { user, logout, isLoading } = useAuth();
 
   useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  useEffect(() => {
-    if (isClient) {
-      const isLoggedIn = localStorage.getItem("isLoggedIn");
-      if (isLoggedIn !== "true" && pathname !== "/login") {
-        router.replace("/login");
-      }
+    if (!isLoading && !user && pathname !== "/login") {
+      router.replace("/login");
     }
-  }, [pathname, router, isClient]);
+  }, [pathname, router, user, isLoading]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("isLoggedIn");
-    router.replace("/login");
-  };
-  
-  if (!isClient || (pathname !== "/login" && localStorage.getItem("isLoggedIn") !== "true")) {
-    return null; // Or a loading spinner
+  if (isLoading || (pathname !== "/login" && !user)) {
+    return (
+      <div className="flex min-h-screen w-full items-center justify-center bg-background">
+        <p>Memuat aplikasi...</p>
+      </div>
+    );
   }
 
   if (pathname === "/login") {
@@ -93,9 +86,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <SidebarFooter>
             <SidebarMenu>
                <SidebarMenuItem>
-                 <SidebarMenuButton onClick={handleLogout} tooltip="Keluar">
+                 <SidebarMenuButton onClick={logout} tooltip="Keluar">
                     <LogOut />
-                    <span>Keluar</span>
+                    <span>Keluar ({user?.username})</span>
                   </SidebarMenuButton>
                </SidebarMenuItem>
             </SidebarMenu>

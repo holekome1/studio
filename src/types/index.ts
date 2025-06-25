@@ -1,3 +1,11 @@
+
+export type UserRole = 'admin' | 'kepala' | 'manajer';
+
+export interface User {
+  username: string;
+  role: UserRole;
+}
+
 export interface Part {
   id: string;
   name: string;

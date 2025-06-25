@@ -26,6 +26,7 @@ import { PartTable } from "@/components/inventory/part-table";
 import { SearchFilterBar, ALL_CATEGORIES_VALUE, ALL_LOCATIONS_VALUE } from "@/components/inventory/search-filter-bar";
 import type { Part, TransactionRecord, TransactionItem } from "@/types";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { PlusCircle, ArrowRightLeft } from "lucide-react";
 import { TransactionForm } from "@/components/inventory/transaction-form";
 import type { PartFormValues } from "@/components/inventory/part-form";
@@ -66,6 +67,7 @@ const Home: NextPage = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     setIsLoading(true);
@@ -292,12 +294,16 @@ const Home: NextPage = () => {
       <div className="mb-6 flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center sm:gap-2">
         <h1 className="font-headline text-3xl font-bold">Manajemen Inventaris</h1>
         <div className="flex gap-2">
-          <Button onClick={() => setIsTransactionFormOpen(true)}>
-            <ArrowRightLeft className="mr-2 h-5 w-5" /> barang keluar
-          </Button>
-          <Button onClick={() => { setEditingPart(undefined); setIsPartFormOpen(true); }}>
-            <PlusCircle className="mr-2 h-5 w-5" /> Tambah Suku Cadang
-          </Button>
+          {user?.role !== 'manajer' && (
+            <>
+              <Button onClick={() => setIsTransactionFormOpen(true)}>
+                <ArrowRightLeft className="mr-2 h-5 w-5" /> barang keluar
+              </Button>
+              <Button onClick={() => { setEditingPart(undefined); setIsPartFormOpen(true); }}>
+                <PlusCircle className="mr-2 h-5 w-5" /> Tambah Suku Cadang
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
@@ -311,7 +317,7 @@ const Home: NextPage = () => {
         availableLocations={availableLocations}
       />
 
-      <PartTable parts={filteredParts} onEdit={openEditForm} onDelete={openDeleteConfirm} />
+      <PartTable parts={filteredParts} onEdit={openEditForm} onDelete={openDeleteConfirm} userRole={user?.role} />
 
       {/* Part Add/Edit Dialog */}
       <Dialog open={isPartFormOpen} onOpenChange={setIsPartFormOpen}>

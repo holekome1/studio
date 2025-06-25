@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Edit3, Trash2, Package, AlertTriangle } from "lucide-react";
-import type { Part } from "@/types";
+import type { Part, UserRole } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -22,6 +22,7 @@ interface PartTableProps {
   parts: Part[];
   onEdit: (part: Part) => void;
   onDelete: (partId: string) => void;
+  userRole?: UserRole;
 }
 
 const formatRupiah = (amount: number) => {
@@ -33,7 +34,7 @@ const formatRupiah = (amount: number) => {
   }).format(amount);
 };
 
-export function PartTable({ parts, onEdit, onDelete }: PartTableProps) {
+export function PartTable({ parts, onEdit, onDelete, userRole }: PartTableProps) {
   if (parts.length === 0) {
     return (
       <Card className="mt-6">
@@ -94,23 +95,27 @@ export function PartTable({ parts, onEdit, onDelete }: PartTableProps) {
                       </TableCell>
                       <TableCell>{part.storageLocation}</TableCell>
                       <TableCell className="text-right space-x-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => onEdit(part)}
-                          aria-label={`Edit ${part.name}`}
-                        >
-                          <Edit3 className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => onDelete(part.id)}
-                          className="text-destructive hover:text-destructive"
-                          aria-label={`Hapus ${part.name}`}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {userRole === 'admin' && (
+                           <>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => onEdit(part)}
+                              aria-label={`Edit ${part.name}`}
+                            >
+                              <Edit3 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => onDelete(part.id)}
+                              className="text-destructive hover:text-destructive"
+                              aria-label={`Hapus ${part.name}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                           </>
+                        )}
                       </TableCell>
                     </TableRow>
                   );
