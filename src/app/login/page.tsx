@@ -33,6 +33,7 @@ export default function LoginPage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
+  // This state is now primarily for UI, logic will use localStorage as source of truth
   const [users, setUsers] = useState<Record<string, { password: string; role: UserRole }>>({});
 
   useEffect(() => {
@@ -41,8 +42,9 @@ export default function LoginPage() {
       if (storedUsers) {
         setUsers(JSON.parse(storedUsers));
       } else {
-        setUsers(defaultUsers);
-        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(defaultUsers));
+        const initialUsers = defaultUsers;
+        setUsers(initialUsers);
+        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(initialUsers));
       }
     } catch (error) {
       console.error("Failed to load users from localStorage", error);
@@ -55,7 +57,11 @@ export default function LoginPage() {
     setIsLoading(true);
 
     setTimeout(() => {
-      const user = users[username.toLowerCase()];
+      // FIX: Read directly from localStorage to get the most up-to-date user list
+      const storedUsersRaw = localStorage.getItem(USERS_STORAGE_KEY);
+      const currentUsers = storedUsersRaw ? JSON.parse(storedUsersRaw) : {};
+      const user = currentUsers[username.toLowerCase()];
+      
       if (user && user.password === password) {
         const currentUser = { username: username.toLowerCase(), role: user.role };
         localStorage.setItem("currentUser", JSON.stringify(currentUser));
@@ -81,7 +87,12 @@ export default function LoginPage() {
         toast({ title: "Pendaftaran Gagal", description: "Semua kolom harus diisi.", variant: "destructive"});
         return;
     }
-    if (users[newUsername.toLowerCase()]) {
+    
+    // FIX: Use localStorage as the single source of truth for user data
+    const storedUsersRaw = localStorage.getItem(USERS_STORAGE_KEY);
+    const currentUsers = storedUsersRaw ? JSON.parse(storedUsersRaw) : {};
+
+    if (currentUsers[newUsername.toLowerCase()]) {
       toast({ title: "Pendaftaran Gagal", description: "Nama pengguna sudah digunakan.", variant: "destructive"});
       return;
     }
@@ -90,8 +101,8 @@ export default function LoginPage() {
       return;
     }
 
-    const updatedUsers = { ...users, [newUsername.toLowerCase()]: { password: newPassword, role: 'admin' as UserRole } };
-    setUsers(updatedUsers);
+    const updatedUsers = { ...currentUsers, [newUsername.toLowerCase()]: { password: newPassword, role: 'admin' as UserRole } };
+    setUsers(updatedUsers); // Update state for any UI relying on it
     localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updatedUsers));
     
     toast({ title: "Akun Dibuat", description: "Akun baru Anda telah berhasil dibuat. Silakan login." });
