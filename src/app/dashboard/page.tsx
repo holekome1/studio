@@ -2,8 +2,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { collection, query, onSnapshot, orderBy } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ChartTooltipContent, ChartContainer } from "@/components/ui/chart";
@@ -29,27 +27,26 @@ const incomingChartConfig = {
   },
 };
 
+const getStoredTransactions = (): TransactionRecord[] => {
+  if (typeof window === 'undefined') return [];
+  const stored = localStorage.getItem('inventory_transactions');
+  try {
+    return stored ? JSON.parse(stored) : [];
+  } catch (e) {
+    console.error("Failed to parse transactions from localStorage", e);
+    return [];
+  }
+};
+
+
 export default function DashboardPage() {
   const [transactionRecords, setTransactionRecords] = useState<TransactionRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!db) {
-        setIsLoading(false);
-        return;
-    }
-    const transactionsCollection = collection(db, "transactions");
-    const q = query(transactionsCollection, orderBy("timestamp", "desc"));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const recordsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TransactionRecord));
-      setTransactionRecords(recordsData);
-      setIsLoading(false);
-    }, (error) => {
-      console.error("Error fetching transactions:", error);
-      setIsLoading(false);
-    });
-
-    return () => unsubscribe();
+    const recordsData = getStoredTransactions();
+    setTransactionRecords(recordsData);
+    setIsLoading(false);
   }, []);
 
   const outgoingItemsData = useMemo<ChartData[]>(() => {

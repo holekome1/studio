@@ -3,8 +3,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -28,27 +26,28 @@ const formatDate = (timestamp: number) => {
     })
 }
 
+const getStoredTransactions = (): TransactionRecord[] => {
+  if (typeof window === 'undefined') return [];
+  const stored = localStorage.getItem('inventory_transactions');
+  try {
+    return stored ? JSON.parse(stored) : [];
+  } catch (e) {
+    console.error("Failed to parse transactions from localStorage", e);
+    return [];
+  }
+};
+
+
 export default function TransactionsPage() {
   const [records, setRecords] = useState<TransactionRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!db) {
-        setIsLoading(false);
-        return;
-    }
-    const transactionsCollection = collection(db, "transactions");
-    const q = query(transactionsCollection, orderBy("timestamp", "desc"));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const recordsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TransactionRecord));
-      setRecords(recordsData);
-      setIsLoading(false);
-    }, (error) => {
-      console.error("Error fetching transactions:", error);
-      setIsLoading(false);
-    });
-
-    return () => unsubscribe();
+    const storedRecords = getStoredTransactions();
+    // Sort records by timestamp descending
+    const sortedRecords = storedRecords.sort((a, b) => b.timestamp - a.timestamp);
+    setRecords(sortedRecords);
+    setIsLoading(false);
   }, []);
 
   if (isLoading) {
@@ -86,7 +85,7 @@ export default function TransactionsPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>{formatDate(record.timestamp)}</TableCell>
-                    <TableCell className="text-center">{record.items.length}</TableCell>
+                    <TableCell className="text-center">{record.items.reduce((sum, item) => sum + item.quantity, 0)}</TableCell>
                     <TableCell className="text-right">{formatRupiah(record.totalAmount)}</TableCell>
                     <TableCell className="text-right">
                        <Button asChild variant="ghost" size="icon">

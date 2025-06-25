@@ -3,8 +3,6 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { doc, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import type { TransactionRecord } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -34,30 +32,27 @@ export default function PrintInvoicePage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchRecord = async () => {
-        const transactionId = Array.isArray(id) ? id[0] : id;
-        if (!transactionId) {
-            setIsLoading(false);
-            return;
-        }
-        try {
-            const docRef = doc(db, 'transactions', transactionId);
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                setRecord({ id: docSnap.id, ...docSnap.data() } as TransactionRecord);
-            } else {
-                console.log("No such document!");
-                setRecord(null);
-            }
-        } catch (error) {
-            console.error("Error fetching transaction for print:", error);
+    const transactionId = Array.isArray(id) ? id[0] : id;
+    if (!transactionId || typeof window === 'undefined') {
+        setIsLoading(false);
+        return;
+    }
+
+    try {
+        const storedTransactions = localStorage.getItem('inventory_transactions');
+        if (storedTransactions) {
+            const transactions: TransactionRecord[] = JSON.parse(storedTransactions);
+            const foundRecord = transactions.find(t => t.id === transactionId);
+            setRecord(foundRecord || null);
+        } else {
             setRecord(null);
-        } finally {
-            setIsLoading(false);
         }
-    };
-    
-    fetchRecord();
+    } catch (error) {
+        console.error("Error fetching transaction for print:", error);
+        setRecord(null);
+    } finally {
+        setIsLoading(false);
+    }
   }, [id]);
 
   const handlePrint = () => {
@@ -106,8 +101,8 @@ export default function PrintInvoicePage() {
                         </tr>
                     </thead>
                     <tbody>
-                        {record.items.map(item => (
-                            <tr key={item.partId} className="border-b border-dashed border-gray-300">
+                        {record.items.map((item, index) => (
+                            <tr key={`${item.partId}-${index}`} className="border-b border-dashed border-gray-300">
                                 <td className="py-1.5">{item.partName}</td>
                                 <td className="text-center py-1.5">{item.quantity}</td>
                                 <td className="text-right py-1.5">{formatRupiah(item.price)}</td>

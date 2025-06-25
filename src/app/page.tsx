@@ -2,9 +2,6 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { collection, query, onSnapshot, addDoc, doc, updateDoc, deleteDoc, writeBatch, getDocs, where, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-
 import type { NextPage } from "next";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,8 +32,31 @@ import { TransactionForm } from "@/components/inventory/transaction-form";
 import type { PartFormValues } from "@/components/inventory/part-form";
 import { Badge } from "@/components/ui/badge";
 
+// LocalStorage Helper Functions
+const getStoredData = <T,>(key: string, fallback: T): T => {
+  if (typeof window === 'undefined') return fallback;
+  try {
+    const stored = localStorage.getItem(key);
+    return stored ? JSON.parse(stored) : fallback;
+  } catch (error) {
+    console.error(`Error reading ${key} from localStorage`, error);
+    return fallback;
+  }
+};
+
+const storeData = <T,>(key: string, data: T) => {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch (error) {
+    console.error(`Error writing ${key} to localStorage`, error);
+  }
+};
+
+
 const Home: NextPage = () => {
   const [parts, setParts] = useState<Part[]>([]);
+  const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
   const [isPartFormOpen, setIsPartFormOpen] = useState(false);
   const [isTransactionFormOpen, setIsTransactionFormOpen] = useState(false);
   const [editingPart, setEditingPart] = useState<Part | undefined>(undefined);
@@ -49,38 +69,29 @@ const Home: NextPage = () => {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  // Fetch data from Firestore
+  // Load data from localStorage on initial render
   useEffect(() => {
-    if (!db) {
-      setIsLoading(false);
-      return;
-    }
-    const partsCollection = collection(db, "parts");
-    setIsLoading(true);
-    const unsubscribeParts = onSnapshot(query(partsCollection), (snapshot) => {
-      const partsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Part));
-      setParts(partsData);
-      setIsLoading(false);
-    }, (error) => {
-      console.error("Error fetching parts:", error);
-      toast({ title: "Gagal Memuat Data", description: "Tidak dapat mengambil data inventaris dari server.", variant: "destructive" });
-      setIsLoading(false);
-    });
+    setParts(getStoredData<Part[]>('inventory_parts', []));
+    setTransactions(getStoredData<TransactionRecord[]>('inventory_transactions', []));
+    setIsLoading(false);
+  }, []);
 
-    return () => unsubscribeParts();
-  }, [toast]);
-
-  const createTransaction = useCallback(async (newTransaction: Omit<TransactionRecord, 'id' | 'timestamp' | 'totalAmount'> & { notes?: string }) => {
-    if (!db) return;
-    const transactionsCollection = collection(db, "transactions");
+  const createTransaction = useCallback((newTransaction: Omit<TransactionRecord, 'id' | 'timestamp' | 'totalAmount'> & { notes?: string }) => {
     try {
       const totalAmount = newTransaction.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-      const fullTransaction: Omit<TransactionRecord, 'id'> = {
+      const fullTransaction: TransactionRecord = {
         ...newTransaction,
+        id: `trans_${Date.now()}`,
         timestamp: Date.now(),
         totalAmount
       };
-      await addDoc(transactionsCollection, fullTransaction);
+      
+      setTransactions(prev => {
+        const updated = [...prev, fullTransaction];
+        storeData('inventory_transactions', updated);
+        return updated;
+      });
+
     } catch (error) {
       console.error("Error creating transaction:", error);
       toast({ title: "Gagal Membuat Transaksi", description: "Terjadi kesalahan saat menyimpan transaksi.", variant: "destructive" });
@@ -88,27 +99,24 @@ const Home: NextPage = () => {
   }, [toast]);
 
   const handleAddPart = async (values: PartFormValues) => {
-    if (!db) return;
-    const partsCollection = collection(db, "parts");
     try {
-      // Check if part with the same name already exists
-      const q = query(partsCollection, where("name", "==", values.name.trim()));
-      const querySnapshot = await getDocs(q);
-
-      if (!querySnapshot.empty) {
-        // Part exists, update quantity
-        const existingDoc = querySnapshot.docs[0];
-        const existingPart = { id: existingDoc.id, ...existingDoc.data() } as Part;
-        const newQuantity = existingPart.quantity + values.quantity;
+      const existingPart = parts.find(p => p.name.toLowerCase() === values.name.trim().toLowerCase());
+      
+      let updatedParts: Part[];
+      if (existingPart) {
+        // Update existing part
+        updatedParts = parts.map(p => 
+          p.id === existingPart.id
+          ? { ...p, 
+              quantity: p.quantity + values.quantity,
+              price: values.price,
+              storageLocation: values.storageLocation,
+              category: values.category,
+              minStock: values.minStock
+            }
+          : p
+        );
         
-        await updateDoc(doc(db, "parts", existingPart.id), {
-          quantity: newQuantity,
-          price: values.price,
-          storageLocation: values.storageLocation,
-          category: values.category,
-          minStock: values.minStock,
-        });
-
         await createTransaction({
           type: 'in',
           items: [{ partId: existingPart.id, partName: existingPart.name, quantity: values.quantity, price: values.price }],
@@ -121,11 +129,16 @@ const Home: NextPage = () => {
         });
 
       } else {
-        // Part doesn't exist, add new part
-        const newPartDoc = await addDoc(partsCollection, values);
+        // Add new part
+        const newPart: Part = {
+          id: `part_${Date.now()}`,
+          ...values,
+        };
+        updatedParts = [...parts, newPart];
+
         await createTransaction({
           type: 'in',
-          items: [{ partId: newPartDoc.id, partName: values.name, quantity: values.quantity, price: values.price }],
+          items: [{ partId: newPart.id, partName: newPart.name, quantity: values.quantity, price: values.price }],
           notes: 'Suku cadang baru ditambahkan',
         });
         toast({
@@ -133,7 +146,10 @@ const Home: NextPage = () => {
           description: `${values.name} telah ditambahkan ke inventaris.`,
         });
       }
+      setParts(updatedParts);
+      storeData('inventory_parts', updatedParts);
       setIsPartFormOpen(false);
+
     } catch (error) {
       console.error("Error adding/updating part:", error);
       toast({ title: "Gagal Menyimpan", description: "Terjadi kesalahan saat menyimpan suku cadang.", variant: "destructive" });
@@ -142,14 +158,15 @@ const Home: NextPage = () => {
 
 
   const handleEditPart = async (values: PartFormValues) => {
-    if (!editingPart?.id || !db) return;
+    if (!editingPart?.id) return;
     
     try {
       const oldPart = parts.find(p => p.id === editingPart.id);
       if (!oldPart) return;
 
-      const partRef = doc(db, "parts", editingPart.id);
-      await updateDoc(partRef, values as Partial<Part>);
+      const updatedParts = parts.map(p => p.id === editingPart.id ? { ...p, ...values } : p);
+      setParts(updatedParts);
+      storeData('inventory_parts', updatedParts);
 
       const quantityChange = values.quantity - oldPart.quantity;
       if (quantityChange !== 0) {
@@ -178,13 +195,15 @@ const Home: NextPage = () => {
   };
 
   const handleDeletePart = async () => {
-    if (!partToDeleteId || !db) return;
+    if (!partToDeleteId) return;
     
     try {
       const partToDelete = parts.find(p => p.id === partToDeleteId);
       if (!partToDelete) return;
-
-      await deleteDoc(doc(db, "parts", partToDeleteId));
+      
+      const updatedParts = parts.filter(p => p.id !== partToDeleteId);
+      setParts(updatedParts);
+      storeData('inventory_parts', updatedParts);
       
       await createTransaction({
         type: 'out',
@@ -201,31 +220,34 @@ const Home: NextPage = () => {
   };
 
   const handleCreateTransaction = async (items: TransactionItem[]) => {
-    if (items.length === 0 || !db) return;
+    if (items.length === 0) return;
 
     try {
       const lowStockAlerts: string[] = [];
-      const batch = writeBatch(db);
+      const updatedParts = [...parts];
+      let transactionValid = true;
 
       for (const item of items) {
-        const partRef = doc(db, "parts", item.partId);
-        const partDoc = await getDoc(partRef); // Use getDoc within a loop for transactions
-        if (partDoc.exists()) {
-          const part = partDoc.data() as Omit<Part, 'id'>;
+        const partIndex = updatedParts.findIndex(p => p.id === item.partId);
+        if (partIndex > -1) {
+          const part = updatedParts[partIndex];
           const newQuantity = part.quantity - item.quantity;
           if (newQuantity < 0) {
-            // This toast will be shown before the transaction is even attempted.
             toast({ title: "Stok Tidak Cukup", description: `Stok untuk ${part.name} hanya ${part.quantity}.`, variant: "destructive" });
-            return; // Stop the whole transaction
+            transactionValid = false;
+            break; 
           }
           if (newQuantity <= part.minStock) {
             lowStockAlerts.push(`${part.name} (sisa ${newQuantity})`);
           }
-          batch.update(partRef, { quantity: newQuantity });
+          updatedParts[partIndex] = { ...part, quantity: newQuantity };
         }
       }
       
-      await batch.commit();
+      if (!transactionValid) return;
+
+      setParts(updatedParts);
+      storeData('inventory_parts', updatedParts);
 
       await createTransaction({
         type: 'out',
@@ -269,7 +291,7 @@ const Home: NextPage = () => {
       const categoryMatch = categoryFilter ? part.category === categoryFilter : true;
       const locationMatch = locationFilter ? part.storageLocation === locationFilter : true;
       return nameMatch && categoryMatch && locationMatch;
-    });
+    }).sort((a,b) => a.name.localeCompare(b.name));
   }, [parts, searchTerm, categoryFilter, locationFilter]);
   
   const handleCategoryChange = (value: string) => {

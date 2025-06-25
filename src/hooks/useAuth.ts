@@ -3,10 +3,18 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { onAuthStateChanged, signOut, type User as FirebaseUser } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
-import { auth, db } from '@/lib/firebase';
 import type { User } from '@/types';
+
+const getCurrentUser = (): User | null => {
+  try {
+    const userJson = localStorage.getItem('currentUser');
+    if (!userJson) return null;
+    return JSON.parse(userJson);
+  } catch (error) {
+    console.error("Failed to parse user from localStorage", error);
+    return null;
+  }
+}
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null);
@@ -14,53 +22,17 @@ export function useAuth() {
   const router = useRouter();
   const pathname = usePathname();
 
-  const fetchUserRole = useCallback(async (firebaseUser: FirebaseUser) => {
-    try {
-      const userDocRef = doc(db, 'users', firebaseUser.uid);
-      const userDoc = await getDoc(userDocRef);
-      if (userDoc.exists()) {
-        const userData = userDoc.data();
-        setUser({
-          uid: firebaseUser.uid,
-          email: firebaseUser.email || '',
-          role: userData.role || 'manajer', // Default to most restrictive role if not found
-        });
-      } else {
-        // Handle case where user exists in Auth but not in Firestore users collection
-        setUser({
-          uid: firebaseUser.uid,
-          email: firebaseUser.email || '',
-          role: 'manajer', // Assign a default restrictive role
-        });
-      }
-    } catch (error) {
-      console.error("Error fetching user role:", error);
-      setUser(null); // Logout user if role fetch fails
-    } finally {
-      setIsLoading(false);
-    }
+  useEffect(() => {
+    // This runs only on the client
+    const currentUser = getCurrentUser();
+    setUser(currentUser);
+    setIsLoading(false);
   }, []);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      if (firebaseUser) {
-        setIsLoading(true);
-        fetchUserRole(firebaseUser);
-      } else {
-        setUser(null);
-        setIsLoading(false);
-      }
-    });
-    return () => unsubscribe();
-  }, [fetchUserRole]);
-
-  const logout = useCallback(async () => {
-    try {
-      await signOut(auth);
-      router.replace('/login');
-    } catch (error) {
-      console.error('Logout failed:', error);
-    }
+  const logout = useCallback(() => {
+    localStorage.removeItem('currentUser');
+    setUser(null);
+    router.replace('/login');
   }, [router]);
 
   // This effect handles redirecting unauthenticated users

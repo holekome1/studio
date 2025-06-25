@@ -2,9 +2,12 @@
 export type UserRole = 'admin' | 'kepala' | 'manajer';
 
 export interface User {
-  uid: string;
-  email: string;
+  username: string;
   role: UserRole;
+}
+
+export interface DummyUser extends User {
+  password?: string;
 }
 
 export interface Part {
