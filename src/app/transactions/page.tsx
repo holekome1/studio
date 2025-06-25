@@ -3,6 +3,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { collection, query, orderBy, onSnapshot } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -26,15 +28,29 @@ const formatDate = (timestamp: number) => {
     })
 }
 
+const transactionsCollection = collection(db, "transactions");
+
 export default function TransactionsPage() {
   const [records, setRecords] = useState<TransactionRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const storedRecords = localStorage.getItem("motorparts_transaction_records");
-    if (storedRecords) {
-      setRecords(JSON.parse(storedRecords).sort((a: TransactionRecord, b: TransactionRecord) => b.timestamp - a.timestamp));
-    }
+    const q = query(transactionsCollection, orderBy("timestamp", "desc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const recordsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TransactionRecord));
+      setRecords(recordsData);
+      setIsLoading(false);
+    }, (error) => {
+      console.error("Error fetching transactions:", error);
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
+
+  if (isLoading) {
+      return <div className="flex items-center justify-center h-full">Memuat riwayat transaksi...</div>
+  }
 
   return (
     <div className="space-y-6">

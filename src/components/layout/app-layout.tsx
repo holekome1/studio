@@ -1,15 +1,13 @@
 
 "use client";
 
-import { useEffect } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import {
   SidebarProvider,
   Sidebar,
   SidebarHeader,
   SidebarContent,
-  SidebarInset,
   SidebarTrigger,
   SidebarMenu,
   SidebarMenuItem,
@@ -22,19 +20,21 @@ import { useAuth } from "@/hooks/useAuth";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const router = useRouter();
   const { user, logout, isLoading } = useAuth();
 
-  useEffect(() => {
-    if (!isLoading && !user && pathname !== "/login") {
-      router.replace("/login");
-    }
-  }, [pathname, router, user, isLoading]);
-
-  if (isLoading || (pathname !== "/login" && !user)) {
+  if (isLoading) {
     return (
       <div className="flex min-h-screen w-full items-center justify-center bg-background">
         <p>Memuat aplikasi...</p>
+      </div>
+    );
+  }
+
+  if (!user && pathname !== "/login") {
+    // The useAuth hook handles redirection, but this prevents flashing the layout.
+    return (
+       <div className="flex min-h-screen w-full items-center justify-center bg-background">
+        <p>Mengarahkan ke halaman login...</p>
       </div>
     );
   }
@@ -88,19 +88,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                <SidebarMenuItem>
                  <SidebarMenuButton onClick={logout} tooltip="Keluar">
                     <LogOut />
-                    <span>Keluar ({user?.username})</span>
+                    <span>Keluar ({user?.email})</span>
                   </SidebarMenuButton>
                </SidebarMenuItem>
             </SidebarMenu>
           </SidebarFooter>
         </Sidebar>
-        <SidebarInset className="flex-1 bg-background">
+        <main className="relative flex min-h-svh flex-1 flex-col bg-background">
           <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:h-16 sm:px-6 md:hidden">
             <SidebarTrigger />
             <h1 className="text-lg font-semibold">GUDANG MAJU SEJAHTRA</h1>
           </header>
-          <main className="flex-1 p-4 sm:p-6">{children}</main>
-        </SidebarInset>
+          <div className="flex-1 p-4 sm:p-6">{children}</div>
+        </main>
       </div>
     </SidebarProvider>
   );

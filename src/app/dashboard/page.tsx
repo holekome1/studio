@@ -2,6 +2,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { collection, query, onSnapshot, orderBy } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ChartTooltipContent, ChartContainer } from "@/components/ui/chart";
@@ -27,14 +29,24 @@ const incomingChartConfig = {
   },
 };
 
+const transactionsCollection = collection(db, "transactions");
+
 export default function DashboardPage() {
   const [transactionRecords, setTransactionRecords] = useState<TransactionRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const storedTransactions = localStorage.getItem("motorparts_transaction_records");
-    if (storedTransactions) {
-      setTransactionRecords(JSON.parse(storedTransactions));
-    }
+    const q = query(transactionsCollection, orderBy("timestamp", "desc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const recordsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TransactionRecord));
+      setTransactionRecords(recordsData);
+      setIsLoading(false);
+    }, (error) => {
+      console.error("Error fetching transactions:", error);
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const outgoingItemsData = useMemo<ChartData[]>(() => {
@@ -68,6 +80,10 @@ export default function DashboardPage() {
       .sort((a, b) => b.total - a.total)
       .slice(0, 10);
   }, [transactionRecords]);
+  
+  if (isLoading) {
+      return <div className="flex items-center justify-center h-full">Memuat data dasbor...</div>
+  }
 
   return (
     <div className="space-y-6">

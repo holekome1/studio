@@ -3,6 +3,8 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import type { TransactionRecord } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -32,15 +34,30 @@ export default function PrintInvoicePage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && id) {
-      const storedRecords = localStorage.getItem("motorparts_transaction_records");
-      if (storedRecords) {
-        const records: TransactionRecord[] = JSON.parse(storedRecords);
-        const foundRecord = records.find(r => r.id === id);
-        setRecord(foundRecord || null);
-      }
-    }
-    setIsLoading(false);
+    const fetchRecord = async () => {
+        const transactionId = Array.isArray(id) ? id[0] : id;
+        if (!transactionId) {
+            setIsLoading(false);
+            return;
+        }
+        try {
+            const docRef = doc(db, 'transactions', transactionId);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                setRecord({ id: docSnap.id, ...docSnap.data() } as TransactionRecord);
+            } else {
+                console.log("No such document!");
+                setRecord(null);
+            }
+        } catch (error) {
+            console.error("Error fetching transaction for print:", error);
+            setRecord(null);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+    
+    fetchRecord();
   }, [id]);
 
   const handlePrint = () => {

@@ -1,7 +1,12 @@
+
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
+import { auth, db } from "@/lib/firebase";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,96 +15,89 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { useToast } from "@/hooks/use-toast";
 import { Logo } from "@/components/icons/logo";
 import type { UserRole } from "@/types";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-const USERS_STORAGE_KEY = "motorparts_users";
-
-const defaultUsers: Record<string, { password: string, role: UserRole }> = {
-  admin: { password: 'password', role: 'admin' },
-  kepala: { password: 'password', role: 'kepala' },
-  manajer: { password: 'password', role: 'manajer' },
-};
 
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
-  const [newUsername, setNewUsername] = useState("");
+  const [newEmail, setNewEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [selectedRole, setSelectedRole] = useState<UserRole>('admin');
 
-  useEffect(() => {
-    try {
-      const storedUsers = localStorage.getItem(USERS_STORAGE_KEY);
-      if (!storedUsers) {
-        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(defaultUsers));
-      }
-    } catch (error) {
-      console.error("Failed to initialize users in localStorage", error);
-    }
-  }, []);
-
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
-    setTimeout(() => {
-      const storedUsersRaw = localStorage.getItem(USERS_STORAGE_KEY);
-      const currentUsers = storedUsersRaw ? JSON.parse(storedUsersRaw) : {};
-      const user = currentUsers[username.toLowerCase()];
-      
-      if (user && user.password === password) {
-        const currentUser = { username: username.toLowerCase(), role: user.role };
-        localStorage.setItem("currentUser", JSON.stringify(currentUser));
-        toast({
-          title: "Login Berhasil",
-          description: `Selamat datang, ${currentUser.username}!`,
-        });
-        window.location.href = "/dashboard";
-      } else {
-        toast({
-          title: "Login Gagal",
-          description: "Nama pengguna atau kata sandi salah.",
-          variant: "destructive",
-        });
-        setIsLoading(false);
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      toast({
+        title: "Login Berhasil",
+        description: `Selamat datang kembali!`,
+      });
+      router.push("/dashboard");
+    } catch (error: any) {
+      console.error("Login error:", error);
+      let description = "Terjadi kesalahan. Silakan coba lagi.";
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+        description = "Email atau kata sandi salah.";
       }
-    }, 1000);
+      toast({
+        title: "Login Gagal",
+        description,
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
   
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newUsername || !newPassword || !confirmPassword) {
+    if (!newEmail || !newPassword || !confirmPassword) {
         toast({ title: "Pendaftaran Gagal", description: "Semua kolom harus diisi.", variant: "destructive"});
         return;
-    }
-    
-    const storedUsersRaw = localStorage.getItem(USERS_STORAGE_KEY);
-    const currentUsers = storedUsersRaw ? JSON.parse(storedUsersRaw) : {};
-
-    if (currentUsers[newUsername.toLowerCase()]) {
-      toast({ title: "Pendaftaran Gagal", description: "Nama pengguna sudah digunakan.", variant: "destructive"});
-      return;
     }
     if (newPassword !== confirmPassword) {
       toast({ title: "Pendaftaran Gagal", description: "Kata sandi tidak cocok.", variant: "destructive"});
       return;
     }
 
-    const updatedUsers = { ...currentUsers, [newUsername.toLowerCase()]: { password: newPassword, role: 'admin' as UserRole } };
-    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updatedUsers));
-    
-    toast({ title: "Akun Dibuat", description: "Akun baru Anda telah berhasil dibuat. Silakan login." });
-    setIsRegisterOpen(false);
-    setNewUsername("");
-    setNewPassword("");
-    setConfirmPassword("");
-  }
+    setIsLoading(true);
+    try {
+        const userCredential = await createUserWithEmailAndPassword(auth, newEmail, newPassword);
+        const user = userCredential.user;
 
+        // Store user role in Firestore
+        await setDoc(doc(db, "users", user.uid), {
+            email: user.email,
+            role: selectedRole
+        });
+        
+        toast({ title: "Akun Dibuat", description: "Akun baru Anda telah berhasil dibuat. Silakan login." });
+        setIsRegisterOpen(false);
+        setNewEmail("");
+        setNewPassword("");
+        setConfirmPassword("");
+    } catch (error: any) {
+        console.error("Registration error:", error);
+        let description = "Terjadi kesalahan saat pendaftaran.";
+        if (error.code === 'auth/email-already-in-use') {
+            description = "Email ini sudah terdaftar.";
+        } else if (error.code === 'auth/weak-password') {
+            description = "Kata sandi terlalu lemah. Minimal 6 karakter.";
+        }
+        toast({ title: "Pendaftaran Gagal", description: description, variant: "destructive" });
+    } finally {
+        setIsLoading(false);
+    }
+  }
 
   return (
     <>
@@ -115,13 +113,13 @@ export default function LoginPage() {
           <form onSubmit={handleLogin}>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="username">Nama Pengguna</Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
-                  id="username"
-                  type="text"
-                  placeholder="Coba: admin, kepala, atau manajer"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  id="email"
+                  type="email"
+                  placeholder="email@contoh.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                   disabled={isLoading}
                 />
@@ -131,16 +129,12 @@ export default function LoginPage() {
                 <Input
                   id="password"
                   type="password"
-                  placeholder="Kata sandi untuk semua: password"
+                  placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   disabled={isLoading}
                 />
-              </div>
-              <div className="pt-2 text-center text-xs text-muted-foreground">
-                <p>Untuk demo, gunakan salah satu akun di atas.</p>
-                <p>Kata sandi untuk semua akun adalah: <strong>password</strong></p>
               </div>
             </CardContent>
             <CardFooter className="flex-col gap-4">
@@ -163,28 +157,31 @@ export default function LoginPage() {
           <DialogHeader>
             <DialogTitle>Buat Akun Baru</DialogTitle>
             <DialogDescription>
-              Buat akun baru untuk mengakses inventaris. Akun baru akan memiliki peran 'admin' secara default.
+              Buat akun baru untuk mengakses inventaris.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleRegister}>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="new-username">Nama Pengguna Baru</Label>
+                <Label htmlFor="new-email">Email</Label>
                 <Input
-                  id="new-username"
-                  value={newUsername}
-                  onChange={(e) => setNewUsername(e.target.value)}
-                  placeholder="Masukkan nama pengguna"
+                  id="new-email"
+                  type="email"
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                  placeholder="Masukkan email"
+                  disabled={isLoading}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="new-password">Kata Sandi Baru</Label>
+                <Label htmlFor="new-password">Kata Sandi</Label>
                 <Input
                   id="new-password"
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                   placeholder="Masukkan kata sandi"
+                  placeholder="Minimal 6 karakter"
+                  disabled={isLoading}
                 />
               </div>
                <div className="space-y-2">
@@ -195,12 +192,26 @@ export default function LoginPage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Masukkan kembali kata sandi"
+                  disabled={isLoading}
                 />
+              </div>
+               <div className="space-y-2">
+                <Label htmlFor="role">Peran (Role)</Label>
+                <Select value={selectedRole} onValueChange={(v) => setSelectedRole(v as UserRole)} disabled={isLoading}>
+                    <SelectTrigger id="role">
+                        <SelectValue placeholder="Pilih peran" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="admin">Admin Gudang</SelectItem>
+                        <SelectItem value="kepala">Kepala Gudang</SelectItem>
+                        <SelectItem value="manajer">Manajer</SelectItem>
+                    </SelectContent>
+                </Select>
               </div>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsRegisterOpen(false)}>Batal</Button>
-              <Button type="submit">Daftar</Button>
+              <Button type="button" variant="outline" onClick={() => setIsRegisterOpen(false)} disabled={isLoading}>Batal</Button>
+              <Button type="submit" disabled={isLoading}>{isLoading ? 'Mendaftarkan...' : 'Daftar'}</Button>
             </DialogFooter>
           </form>
         </DialogContent>

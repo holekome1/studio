@@ -1,7 +1,10 @@
 
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { collection, query, onSnapshot, addDoc, doc, updateDoc, deleteDoc, writeBatch, getDocs, where } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+
 import type { NextPage } from "next";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,9 +35,12 @@ import { TransactionForm } from "@/components/inventory/transaction-form";
 import type { PartFormValues } from "@/components/inventory/part-form";
 import { Badge } from "@/components/ui/badge";
 
+// Firestore collection references
+const partsCollection = collection(db, "parts");
+const transactionsCollection = collection(db, "transactions");
+
 const Home: NextPage = () => {
   const [parts, setParts] = useState<Part[]>([]);
-  const [transactionRecords, setTransactionRecords] = useState<TransactionRecord[]>([]);
   const [isPartFormOpen, setIsPartFormOpen] = useState(false);
   const [isTransactionFormOpen, setIsTransactionFormOpen] = useState(false);
   const [editingPart, setEditingPart] = useState<Part | undefined>(undefined);
@@ -46,225 +52,196 @@ const Home: NextPage = () => {
 
   const { toast } = useToast();
   const { user } = useAuth();
-  
-  const loadDataFromStorage = () => {
-    setIsLoading(true);
-    try {
-      const storedParts = localStorage.getItem("motorparts");
-      const initialPartsData: Part[] = [
-          { id: "1", name: "Spark Plug NGK CR7HSA", quantity: 50, price: 52500, storageLocation: "Rak A-1", category: "Engine Parts", minStock: 10 },
-          { id: "2", name: "Oil Filter Honda OEM", quantity: 30, price: 134850, storageLocation: "Rak B-2", category: "Engine Parts", minStock: 5 },
-          { id: "3", name: "Brake Pads Front Set", quantity: 25, price: 375000, storageLocation: "Rak C-5", category: "Braking System", minStock: 10 },
-          { id: "4", name: "LED Headlight Bulb H4", quantity: 8, price: 299250, storageLocation: "Rak Elektrikal A-1", category: "Electrical Components", minStock: 5 },
-          { id: "5", name: "Chain Lube Motul C2+", quantity: 40, price: 187500, storageLocation: "Rak Cairan 1", category: "Fluids & Chemicals", minStock: 15 },
-          { id: "6", name: "Motorcycle Cover Waterproof", quantity: 10, price: 525000, storageLocation: "Kotak Aksesoris", category: "Accessories", minStock: 2 },
-          { id: "7", name: "Handlebar Grips Yamaha", quantity: 20, price: 236250, storageLocation: "Rak D-3", category: "Body & Frame", minStock: 5 },
-          { id: "8", name: "Tire Pirelli Diablo Rosso III", quantity: 5, price: 2250000, storageLocation: "Rak Ban 2", category: "Wheels & Tires", minStock: 4 },
-          { id: "9", name: "Air Filter Twin Air", quantity: 18, price: 334500, storageLocation: "Rak A-2", category: "Engine Parts", minStock: 5 },
-          { id: "10", name: "Battery Yuasa YTZ10S", quantity: 12, price: 1432500, storageLocation: "Rak Elektrikal B-4", category: "Electrical Components", minStock: 3 },
-          { id: "11", name: "Kabel Rem Belakang", quantity: 22, price: 45000, storageLocation: "Gudang Kabel", category: "Braking System", minStock: 10 },
-          { id: "12", name: "Bohlam Sein (1 pasang)", quantity: 3, price: 25000, storageLocation: "Rak Bohlam", category: "Electrical Components", minStock: 10 },
-          { id: "13", name: "Spion Standar Kanan", quantity: 15, price: 75000, storageLocation: "Lemari Spion", category: "Body & Frame", minStock: 5 },
-          { id: "14", name: "Oli Mesin Federal Oil", quantity: 30, price: 65000, storageLocation: "Rak Oli", category: "Fluids & Chemicals", minStock: 12 },
-          { id: "15", name: "Kampas Kopling Set", quantity: 10, price: 250000, storageLocation: "Kotak Kopling", category: "Engine Parts", minStock: 5 },
-          { id: "16", name: "Gear Set SSS 428", quantity: 8, price: 450000, storageLocation: "Lemari Gear", category: "Engine Parts", minStock: 3},
-          { id: "17", name: "Shockbreaker Belakang YSS", quantity: 6, price: 850000, storageLocation: "Rak Suspensi Heavy Duty", category: "Suspension", minStock: 2},
-          { id: "18", name: "Klakson Denso", quantity: 25, price: 95000, storageLocation: "Laci Klakson", category: "Electrical Components", minStock: 5},
-          { id: "19", name: "Jas Hujan Axio", quantity: 12, price: 220000, storageLocation: "Gantungan Jas Hujan", category: "Accessories", minStock: 5},
-          { id: "20", name: "Pelumas Rantai Top1", quantity: 4, price: 35000, storageLocation: "Area Perawatan", category: "Fluids & Chemicals", minStock: 5},
-      ];
-      setParts(storedParts ? JSON.parse(storedParts) : initialPartsData);
 
-      const storedTransactions = localStorage.getItem("motorparts_transaction_records");
-      setTransactionRecords(storedTransactions ? JSON.parse(storedTransactions) : []);
-    } catch (error) {
-      console.error("Error loading data from localStorage:", error);
-      toast({
-        title: "Gagal Memuat Data",
-        description: "Terjadi kesalahan saat memuat data dari penyimpanan lokal.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
+  // Fetch data from Firestore
   useEffect(() => {
-    loadDataFromStorage();
-  }, []);
+    setIsLoading(true);
+    const unsubscribeParts = onSnapshot(query(partsCollection), (snapshot) => {
+      const partsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Part));
+      setParts(partsData);
+      setIsLoading(false);
+    }, (error) => {
+      console.error("Error fetching parts:", error);
+      toast({ title: "Gagal Memuat Data", description: "Tidak dapat mengambil data inventaris dari server.", variant: "destructive" });
+      setIsLoading(false);
+    });
 
+    return () => unsubscribeParts();
+  }, [toast]);
 
-  const saveDataToStorage = (newParts: Part[], newTransactions: TransactionRecord[]) => {
+  const createTransaction = useCallback(async (newTransaction: Omit<TransactionRecord, 'id' | 'timestamp' | 'totalAmount'> & { notes?: string }) => {
     try {
-      localStorage.setItem("motorparts", JSON.stringify(newParts));
-      localStorage.setItem("motorparts_transaction_records", JSON.stringify(newTransactions));
+      const totalAmount = newTransaction.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      const fullTransaction: Omit<TransactionRecord, 'id'> = {
+        ...newTransaction,
+        timestamp: Date.now(),
+        totalAmount
+      };
+      await addDoc(transactionsCollection, fullTransaction);
     } catch (error) {
-      console.error("Error saving data to localStorage:", error);
-      toast({
-        title: "Gagal Menyimpan Data",
-        description: "Tidak dapat menyimpan perubahan ke penyimpanan lokal.",
-        variant: "destructive",
-      });
+      console.error("Error creating transaction:", error);
+      toast({ title: "Gagal Membuat Transaksi", description: "Terjadi kesalahan saat menyimpan transaksi.", variant: "destructive" });
     }
-  };
+  }, [toast]);
 
+  const handleAddPart = async (values: PartFormValues) => {
+    try {
+      // Check if part with the same name already exists
+      const q = query(partsCollection, where("name", "==", values.name.trim()));
+      const querySnapshot = await getDocs(q);
 
-  const createTransaction = (newTransaction: Omit<TransactionRecord, 'id' | 'timestamp' | 'totalAmount'> & { notes?: string }) => {
-    const totalAmount = newTransaction.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const fullTransaction: TransactionRecord = {
-      ...newTransaction,
-      id: `TXN-${Date.now()}`,
-      timestamp: Date.now(),
-      totalAmount
-    };
-    
-    setTransactionRecords(prev => {
-      const updatedTransactions = [...prev, fullTransaction];
-      saveDataToStorage(parts, updatedTransactions);
-      return updatedTransactions;
-    });
-  };
-  
-  const handleAddPart = (values: PartFormValues) => {
-    const existingPart = parts.find(
-      (p) => p.name.trim().toLowerCase() === values.name.trim().toLowerCase()
-    );
-
-    let updatedParts;
-    if (existingPart) {
-      updatedParts = parts.map((p) =>
-        p.id === existingPart.id
-          ? {
-              ...p,
-              quantity: p.quantity + values.quantity,
-              price: values.price,
-              storageLocation: values.storageLocation,
-              category: values.category,
-              minStock: values.minStock,
-            }
-          : p
-      );
-      createTransaction({
-        type: 'in',
-        items: [{ partId: existingPart.id, partName: existingPart.name, quantity: values.quantity, price: values.price }],
-        notes: `Penambahan stok untuk barang yang sudah ada: ${existingPart.name}`,
-      });
-      toast({
-        title: "Stok Diperbarui",
-        description: `Jumlah untuk ${existingPart.name} telah ditambahkan.`,
-      });
-    } else {
-      const newPart: Part = { ...values, id: Date.now().toString() };
-      updatedParts = [...parts, newPart];
-      createTransaction({
-        type: 'in',
-        items: [{ partId: newPart.id, partName: newPart.name, quantity: newPart.quantity, price: newPart.price }],
-        notes: 'Suku cadang baru ditambahkan',
-      });
-      toast({
-        title: "Suku Cadang Ditambahkan",
-        description: `${values.name} telah ditambahkan ke inventaris.`,
-      });
-    }
-
-    setParts(updatedParts);
-    saveDataToStorage(updatedParts, transactionRecords);
-    setIsPartFormOpen(false);
-  };
-
-  const handleEditPart = (values: PartFormValues) => {
-    if (!editingPart) return;
-    
-    const oldPart = parts.find(p => p.id === editingPart.id);
-    if (!oldPart) return;
-    
-    const oldQuantity = oldPart.quantity;
-    const updatedPart: Part = { ...editingPart, ...values };
-    
-    const updatedParts = parts.map((p) => (p.id === editingPart.id ? updatedPart : p));
-    setParts(updatedParts);
-
-    const quantityChange = updatedPart.quantity - oldQuantity;
-    if (quantityChange !== 0) {
-      createTransaction({
-        type: quantityChange > 0 ? 'in' : 'out',
-        items: [{ partId: updatedPart.id, partName: updatedPart.name, quantity: Math.abs(quantityChange), price: updatedPart.price }],
-        notes: 'Penyesuaian stok manual'
-      });
-    } else {
-       saveDataToStorage(updatedParts, transactionRecords);
-    }
-    
-    if (updatedPart.quantity <= updatedPart.minStock) {
-        toast({
-            title: "Stok Menipis!",
-            description: `Jumlah ${updatedPart.name} telah mencapai batas minimum (${updatedPart.minStock}).`,
-            variant: "destructive"
+      if (!querySnapshot.empty) {
+        // Part exists, update quantity
+        const existingDoc = querySnapshot.docs[0];
+        const existingPart = { id: existingDoc.id, ...existingDoc.data() } as Part;
+        const newQuantity = existingPart.quantity + values.quantity;
+        
+        await updateDoc(doc(db, "parts", existingPart.id), {
+          quantity: newQuantity,
+          price: values.price,
+          storageLocation: values.storageLocation,
+          category: values.category,
+          minStock: values.minStock,
         });
+
+        await createTransaction({
+          type: 'in',
+          items: [{ partId: existingPart.id, partName: existingPart.name, quantity: values.quantity, price: values.price }],
+          notes: `Penambahan stok untuk barang yang sudah ada: ${existingPart.name}`,
+        });
+
+        toast({
+          title: "Stok Diperbarui",
+          description: `Jumlah untuk ${existingPart.name} telah ditambahkan.`,
+        });
+
+      } else {
+        // Part doesn't exist, add new part
+        const newPartDoc = await addDoc(partsCollection, values);
+        await createTransaction({
+          type: 'in',
+          items: [{ partId: newPartDoc.id, partName: values.name, quantity: values.quantity, price: values.price }],
+          notes: 'Suku cadang baru ditambahkan',
+        });
+        toast({
+          title: "Suku Cadang Ditambahkan",
+          description: `${values.name} telah ditambahkan ke inventaris.`,
+        });
+      }
+      setIsPartFormOpen(false);
+    } catch (error) {
+      console.error("Error adding/updating part:", error);
+      toast({ title: "Gagal Menyimpan", description: "Terjadi kesalahan saat menyimpan suku cadang.", variant: "destructive" });
     }
-
-    setIsPartFormOpen(false);
-    setEditingPart(undefined);
-    toast({ title: "Suku Cadang Diperbarui", description: `${values.name} telah diperbarui.` });
   };
 
-  const handleDeletePart = () => {
+
+  const handleEditPart = async (values: PartFormValues) => {
+    if (!editingPart?.id) return;
+    
+    try {
+      const oldPart = parts.find(p => p.id === editingPart.id);
+      if (!oldPart) return;
+
+      const partRef = doc(db, "parts", editingPart.id);
+      await updateDoc(partRef, values as Partial<Part>);
+
+      const quantityChange = values.quantity - oldPart.quantity;
+      if (quantityChange !== 0) {
+        await createTransaction({
+          type: quantityChange > 0 ? 'in' : 'out',
+          items: [{ partId: editingPart.id, partName: values.name, quantity: Math.abs(quantityChange), price: values.price }],
+          notes: 'Penyesuaian stok manual'
+        });
+      }
+      
+      if (values.quantity <= values.minStock) {
+          toast({
+              title: "Stok Menipis!",
+              description: `Jumlah ${values.name} telah mencapai batas minimum (${values.minStock}).`,
+              variant: "destructive"
+          });
+      }
+
+      setIsPartFormOpen(false);
+      setEditingPart(undefined);
+      toast({ title: "Suku Cadang Diperbarui", description: `${values.name} telah diperbarui.` });
+    } catch(error) {
+       console.error("Error editing part:", error);
+       toast({ title: "Gagal Memperbarui", description: "Terjadi kesalahan saat memperbarui suku cadang.", variant: "destructive" });
+    }
+  };
+
+  const handleDeletePart = async () => {
     if (!partToDeleteId) return;
-    const partToDelete = parts.find(p => p.id === partToDeleteId);
-    if (!partToDelete) return;
     
-    createTransaction({
-      type: 'out',
-      items: [{ partId: partToDelete.id, partName: partToDelete.name, quantity: partToDelete.quantity, price: partToDelete.price }],
-      notes: `Suku cadang ${partToDelete.name} dihapus`
-    });
-    
-    const updatedParts = parts.filter((p) => p.id !== partToDeleteId);
-    setParts(updatedParts);
-    saveDataToStorage(updatedParts, transactionRecords);
-    
-    setPartToDeleteId(null);
-    toast({ title: "Suku Cadang Dihapus", description: `${partToDelete.name} telah dihapus dari inventaris.`, variant: "destructive" });
+    try {
+      const partToDelete = parts.find(p => p.id === partToDeleteId);
+      if (!partToDelete) return;
+
+      await deleteDoc(doc(db, "parts", partToDeleteId));
+      
+      await createTransaction({
+        type: 'out',
+        items: [{ partId: partToDelete.id, partName: partToDelete.name, quantity: partToDelete.quantity, price: partToDelete.price }],
+        notes: `Suku cadang ${partToDelete.name} dihapus`
+      });
+      
+      setPartToDeleteId(null);
+      toast({ title: "Suku Cadang Dihapus", description: `${partToDelete.name} telah dihapus dari inventaris.`, variant: "destructive" });
+    } catch (error) {
+      console.error("Error deleting part:", error);
+      toast({ title: "Gagal Menghapus", description: "Terjadi kesalahan saat menghapus suku cadang.", variant: "destructive" });
+    }
   };
 
-  const handleCreateTransaction = (items: TransactionItem[]) => {
+  const handleCreateTransaction = async (items: TransactionItem[]) => {
     if (items.length === 0) return;
 
-    let currentParts = [...parts];
-    const lowStockAlerts: string[] = [];
+    try {
+      const lowStockAlerts: string[] = [];
+      const batch = writeBatch(db);
 
-    const updatedParts = currentParts.map(part => {
-      const itemInTransaction = items.find(item => item.partId === part.id);
-      if (itemInTransaction) {
-        const newQuantity = part.quantity - itemInTransaction.quantity;
-        if (newQuantity <= part.minStock) {
-          lowStockAlerts.push(`${part.name} (sisa ${newQuantity})`);
+      for (const item of items) {
+        const partRef = doc(db, "parts", item.partId);
+        const partDoc = await getDoc(partRef); // Use getDoc within a loop for transactions
+        if (partDoc.exists()) {
+          const part = partDoc.data() as Omit<Part, 'id'>;
+          const newQuantity = part.quantity - item.quantity;
+          if (newQuantity < 0) {
+            // This toast will be shown before the transaction is even attempted.
+            toast({ title: "Stok Tidak Cukup", description: `Stok untuk ${part.name} hanya ${part.quantity}.`, variant: "destructive" });
+            return; // Stop the whole transaction
+          }
+          if (newQuantity <= part.minStock) {
+            lowStockAlerts.push(`${part.name} (sisa ${newQuantity})`);
+          }
+          batch.update(partRef, { quantity: newQuantity });
         }
-        return { ...part, quantity: newQuantity };
       }
-      return part;
-    });
+      
+      await batch.commit();
 
-    setParts(updatedParts);
+      await createTransaction({
+        type: 'out',
+        items: items,
+        notes: 'Transaksi penjualan/keluar'
+      });
 
-    createTransaction({
-      type: 'out',
-      items: items,
-      notes: 'Transaksi penjualan/keluar'
-    });
-    
-    saveDataToStorage(updatedParts, transactionRecords);
-
-    toast({ title: "Transaksi Berhasil", description: `${items.length} item telah dikeluarkan dari gudang.` });
-    if(lowStockAlerts.length > 0) {
-       toast({
-            title: "Stok Menipis!",
-            description: `Beberapa stok menipis: ${lowStockAlerts.join(', ')}.`,
-            variant: "destructive",
-            duration: 5000
-        });
+      toast({ title: "Transaksi Berhasil", description: `${items.length} item telah dikeluarkan dari gudang.` });
+      if(lowStockAlerts.length > 0) {
+         toast({
+              title: "Stok Menipis!",
+              description: `Beberapa stok menipis: ${lowStockAlerts.join(', ')}.`,
+              variant: "destructive",
+              duration: 5000
+          });
+      }
+      setIsTransactionFormOpen(false);
+    } catch (error: any) {
+        console.error("Error creating transaction:", error);
+        toast({ title: "Transaksi Gagal", description: error.message || "Terjadi kesalahan saat membuat transaksi.", variant: "destructive" });
     }
-    setIsTransactionFormOpen(false);
   }
 
   const openEditForm = (part: Part) => {
@@ -289,7 +266,7 @@ const Home: NextPage = () => {
       return nameMatch && categoryMatch && locationMatch;
     });
   }, [parts, searchTerm, categoryFilter, locationFilter]);
-
+  
   const handleCategoryChange = (value: string) => {
     setCategoryFilter(value === ALL_CATEGORIES_VALUE ? "" : value);
   };
@@ -297,6 +274,11 @@ const Home: NextPage = () => {
   const handleLocationChange = (value: string) => {
     setLocationFilter(value === ALL_LOCATIONS_VALUE ? "" : value);
   };
+
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-full">Memuat data inventaris...</div>;
+  }
 
   return (
     <div className="container mx-auto py-2">
@@ -315,9 +297,11 @@ const Home: NextPage = () => {
               <Button onClick={() => setIsTransactionFormOpen(true)}>
                 <ArrowRightLeft className="mr-2 h-5 w-5" /> barang keluar
               </Button>
-              <Button onClick={() => { setEditingPart(undefined); setIsPartFormOpen(true); }}>
-                <PlusCircle className="mr-2 h-5 w-5" /> Tambah Suku Cadang
-              </Button>
+              {user?.role === 'admin' && (
+                <Button onClick={() => { setEditingPart(undefined); setIsPartFormOpen(true); }}>
+                  <PlusCircle className="mr-2 h-5 w-5" /> Tambah Suku Cadang
+                </Button>
+              )}
             </>
           )}
         </div>
