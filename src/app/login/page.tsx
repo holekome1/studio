@@ -86,6 +86,10 @@ export default function LoginPage() {
                 disabled={isLoading}
               />
             </div>
+             <div className="pt-2 text-center text-xs text-muted-foreground">
+              <p>Untuk demo, gunakan salah satu akun di atas.</p>
+              <p>Kata sandi untuk semua akun adalah: <strong>password</strong></p>
+            </div>
           </CardContent>
           <CardFooter>
             <Button type="submit" className="w-full" disabled={isLoading}>
