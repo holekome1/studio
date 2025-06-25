@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -34,7 +33,6 @@ export default function LoginPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
 
   useEffect(() => {
-    // On initial load, check if we need to set up the default users.
     try {
       const storedUsers = localStorage.getItem(USERS_STORAGE_KEY);
       if (!storedUsers) {
@@ -42,8 +40,6 @@ export default function LoginPage() {
       }
     } catch (error) {
       console.error("Failed to initialize users in localStorage", error);
-      // Fallback in case of error
-      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(defaultUsers));
     }
   }, []);
 
@@ -52,7 +48,6 @@ export default function LoginPage() {
     setIsLoading(true);
 
     setTimeout(() => {
-      // Always read directly from localStorage to get the most up-to-date user list.
       const storedUsersRaw = localStorage.getItem(USERS_STORAGE_KEY);
       const currentUsers = storedUsersRaw ? JSON.parse(storedUsersRaw) : {};
       const user = currentUsers[username.toLowerCase()];
@@ -83,7 +78,6 @@ export default function LoginPage() {
         return;
     }
     
-    // Use localStorage as the single source of truth for user data.
     const storedUsersRaw = localStorage.getItem(USERS_STORAGE_KEY);
     const currentUsers = storedUsersRaw ? JSON.parse(storedUsersRaw) : {};
 
@@ -125,7 +119,7 @@ export default function LoginPage() {
                 <Input
                   id="username"
                   type="text"
-                  placeholder="admin / kepala / manajer"
+                  placeholder="Coba: admin, kepala, atau manajer"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
@@ -137,7 +131,7 @@ export default function LoginPage() {
                 <Input
                   id="password"
                   type="password"
-                  placeholder="password"
+                  placeholder="Kata sandi untuk semua: password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
