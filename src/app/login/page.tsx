@@ -33,22 +33,17 @@ export default function LoginPage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  // This state is now primarily for UI, logic will use localStorage as source of truth
-  const [users, setUsers] = useState<Record<string, { password: string; role: UserRole }>>({});
-
   useEffect(() => {
+    // On initial load, check if we need to set up the default users.
     try {
       const storedUsers = localStorage.getItem(USERS_STORAGE_KEY);
-      if (storedUsers) {
-        setUsers(JSON.parse(storedUsers));
-      } else {
-        const initialUsers = defaultUsers;
-        setUsers(initialUsers);
-        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(initialUsers));
+      if (!storedUsers) {
+        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(defaultUsers));
       }
     } catch (error) {
-      console.error("Failed to load users from localStorage", error);
-      setUsers(defaultUsers);
+      console.error("Failed to initialize users in localStorage", error);
+      // Fallback in case of error
+      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(defaultUsers));
     }
   }, []);
 
@@ -57,7 +52,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     setTimeout(() => {
-      // FIX: Read directly from localStorage to get the most up-to-date user list
+      // Always read directly from localStorage to get the most up-to-date user list.
       const storedUsersRaw = localStorage.getItem(USERS_STORAGE_KEY);
       const currentUsers = storedUsersRaw ? JSON.parse(storedUsersRaw) : {};
       const user = currentUsers[username.toLowerCase()];
@@ -88,7 +83,7 @@ export default function LoginPage() {
         return;
     }
     
-    // FIX: Use localStorage as the single source of truth for user data
+    // Use localStorage as the single source of truth for user data.
     const storedUsersRaw = localStorage.getItem(USERS_STORAGE_KEY);
     const currentUsers = storedUsersRaw ? JSON.parse(storedUsersRaw) : {};
 
@@ -102,7 +97,6 @@ export default function LoginPage() {
     }
 
     const updatedUsers = { ...currentUsers, [newUsername.toLowerCase()]: { password: newPassword, role: 'admin' as UserRole } };
-    setUsers(updatedUsers); // Update state for any UI relying on it
     localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updatedUsers));
     
     toast({ title: "Akun Dibuat", description: "Akun baru Anda telah berhasil dibuat. Silakan login." });
