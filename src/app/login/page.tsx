@@ -64,7 +64,7 @@ export default function LoginPage() {
           title: "Login Berhasil",
           description: `Selamat datang, ${currentUser.username}!`,
         });
-        router.push("/dashboard");
+        window.location.href = "/dashboard";
       } else {
         toast({
           title: "Login Gagal",
