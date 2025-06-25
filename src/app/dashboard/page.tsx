@@ -29,13 +29,16 @@ const incomingChartConfig = {
   },
 };
 
-const transactionsCollection = collection(db, "transactions");
-
 export default function DashboardPage() {
   const [transactionRecords, setTransactionRecords] = useState<TransactionRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (!db) {
+        setIsLoading(false);
+        return;
+    }
+    const transactionsCollection = collection(db, "transactions");
     const q = query(transactionsCollection, orderBy("timestamp", "desc"));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const recordsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as TransactionRecord));

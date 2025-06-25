@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { collection, query, onSnapshot, addDoc, doc, updateDoc, deleteDoc, writeBatch, getDocs, where } from "firebase/firestore";
+import { collection, query, onSnapshot, addDoc, doc, updateDoc, deleteDoc, writeBatch, getDocs, where, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 import type { NextPage } from "next";
@@ -35,10 +35,6 @@ import { TransactionForm } from "@/components/inventory/transaction-form";
 import type { PartFormValues } from "@/components/inventory/part-form";
 import { Badge } from "@/components/ui/badge";
 
-// Firestore collection references
-const partsCollection = collection(db, "parts");
-const transactionsCollection = collection(db, "transactions");
-
 const Home: NextPage = () => {
   const [parts, setParts] = useState<Part[]>([]);
   const [isPartFormOpen, setIsPartFormOpen] = useState(false);
@@ -55,6 +51,11 @@ const Home: NextPage = () => {
 
   // Fetch data from Firestore
   useEffect(() => {
+    if (!db) {
+      setIsLoading(false);
+      return;
+    }
+    const partsCollection = collection(db, "parts");
     setIsLoading(true);
     const unsubscribeParts = onSnapshot(query(partsCollection), (snapshot) => {
       const partsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Part));
@@ -70,6 +71,8 @@ const Home: NextPage = () => {
   }, [toast]);
 
   const createTransaction = useCallback(async (newTransaction: Omit<TransactionRecord, 'id' | 'timestamp' | 'totalAmount'> & { notes?: string }) => {
+    if (!db) return;
+    const transactionsCollection = collection(db, "transactions");
     try {
       const totalAmount = newTransaction.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
       const fullTransaction: Omit<TransactionRecord, 'id'> = {
@@ -85,6 +88,8 @@ const Home: NextPage = () => {
   }, [toast]);
 
   const handleAddPart = async (values: PartFormValues) => {
+    if (!db) return;
+    const partsCollection = collection(db, "parts");
     try {
       // Check if part with the same name already exists
       const q = query(partsCollection, where("name", "==", values.name.trim()));
@@ -137,7 +142,7 @@ const Home: NextPage = () => {
 
 
   const handleEditPart = async (values: PartFormValues) => {
-    if (!editingPart?.id) return;
+    if (!editingPart?.id || !db) return;
     
     try {
       const oldPart = parts.find(p => p.id === editingPart.id);
@@ -173,7 +178,7 @@ const Home: NextPage = () => {
   };
 
   const handleDeletePart = async () => {
-    if (!partToDeleteId) return;
+    if (!partToDeleteId || !db) return;
     
     try {
       const partToDelete = parts.find(p => p.id === partToDeleteId);
@@ -196,7 +201,7 @@ const Home: NextPage = () => {
   };
 
   const handleCreateTransaction = async (items: TransactionItem[]) => {
-    if (items.length === 0) return;
+    if (items.length === 0 || !db) return;
 
     try {
       const lowStockAlerts: string[] = [];
