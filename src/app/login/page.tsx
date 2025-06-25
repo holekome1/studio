@@ -108,7 +108,7 @@ export default function LoginPage() {
               <Logo className="h-8 w-8 text-primary-foreground" />
             </div>
             <CardTitle>GUDANG MAJU SEJAHTRA</CardTitle>
-            <CardDescription>Silakan masuk atau buat akun baru untuk melanjutkan</CardDescription>
+            <CardDescription>Gunakan akun Firebase Anda. Belum punya? Buat akun untuk peran 'Admin', 'Kepala Gudang', dan 'Manajer' untuk mencoba semua fitur.</CardDescription>
           </CardHeader>
           <form onSubmit={handleLogin}>
             <CardContent className="space-y-4">
