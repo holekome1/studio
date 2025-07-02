@@ -66,9 +66,13 @@ export default function LoginPage() {
             </div>
             <CardTitle>GUDANG MAJU SEJAHTRA</CardTitle>
             <CardDescription>
-                Login dengan akun demo: <br/>
-                <b>admin</b>/<b>kepala</b>/<b>manajer</b> <br/>
-                Semua password: <b>password</b>
+              Gunakan akun demo di bawah ini untuk masuk. <br/>
+              Semua kata sandi adalah: <b>password</b>
+              <ul className="list-disc list-inside mt-2 text-left w-fit mx-auto">
+                  <li><b>admin</b> (Akses Penuh)</li>
+                  <li><b>kepala</b> (Transaksi & Stok)</li>
+                  <li><b>manajer</b> (Hanya Lihat)</li>
+              </ul>
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleLogin}>
