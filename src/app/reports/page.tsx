@@ -13,7 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import type { TransactionRecord } from "@/types";
-import { ArrowDownCircle, ArrowUpCircle, BookOpen, FileText, ShoppingCart, TrendingDown, TrendingUp } from "lucide-react";
+import { ArrowDownCircle, ArrowUpCircle, BookOpen, Printer, TrendingDown, TrendingUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const getStoredTransactions = (): TransactionRecord[] => {
   if (typeof window === 'undefined') return [];
@@ -153,18 +154,24 @@ export default function ReportsPage() {
     <div className="space-y-6">
       <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <h1 className="font-headline text-3xl font-bold">Laporan Gabungan</h1>
-        <div className="w-full sm:w-auto sm:min-w-[220px]">
-          <Label htmlFor="filter-select" className="sr-only">Filter berdasarkan periode</Label>
-          <Select value={filter} onValueChange={setFilter}>
-            <SelectTrigger id="filter-select" className="w-full">
-              <SelectValue placeholder="Pilih periode..." />
-            </SelectTrigger>
-            <SelectContent>
-              {filterOptions.map(opt => (
-                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+          <div className="w-full sm:w-auto sm:min-w-[220px] no-print">
+            <Label htmlFor="filter-select" className="sr-only">Filter berdasarkan periode</Label>
+            <Select value={filter} onValueChange={setFilter}>
+              <SelectTrigger id="filter-select" className="w-full">
+                <SelectValue placeholder="Pilih periode..." />
+              </SelectTrigger>
+              <SelectContent>
+                {filterOptions.map(opt => (
+                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <Button onClick={() => window.print()} variant="outline" className="no-print">
+            <Printer className="mr-2 h-4 w-4" />
+            Cetak Laporan
+          </Button>
         </div>
       </div>
       

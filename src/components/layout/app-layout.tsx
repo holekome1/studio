@@ -40,14 +40,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (pathname === "/login") {
+  if (pathname === "/login" || pathname.includes("/print")) {
     return <>{children}</>;
   }
 
   return (
     <SidebarProvider defaultOpen>
       <div className="flex min-h-screen">
-        <Sidebar collapsible="icon" className="shadow-lg">
+        <Sidebar collapsible="icon" className="shadow-lg no-print">
           <SidebarHeader className="p-4">
             <div className="flex items-center gap-2">
               <Logo className="h-8 w-8 text-sidebar-primary-foreground" />
@@ -107,7 +107,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </SidebarFooter>
         </Sidebar>
         <main className="relative flex min-h-svh flex-1 flex-col bg-background">
-          <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:h-16 sm:px-6 md:hidden">
+          <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:h-16 sm:px-6 md:hidden no-print">
             <SidebarTrigger />
             <h1 className="text-lg font-semibold">GUDANG MAJU SEJAHTRA</h1>
           </header>

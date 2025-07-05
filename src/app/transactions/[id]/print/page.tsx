@@ -55,6 +55,12 @@ export default function PrintInvoicePage() {
     }
   }, [id]);
 
+  useEffect(() => {
+    if (record) {
+      setTimeout(() => window.print(), 500);
+    }
+  }, [record]);
+
   const handlePrint = () => {
     window.print();
   };
@@ -139,7 +145,7 @@ export default function PrintInvoicePage() {
         <div className="max-w-md mx-auto mt-4 text-center no-print">
             <Button onClick={handlePrint}>
                 <Printer className="mr-2 h-4 w-4"/>
-                Cetak Struk
+                Cetak Ulang
             </Button>
         </div>
     </div>
