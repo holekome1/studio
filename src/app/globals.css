@@ -183,7 +183,6 @@ body {
   }
 
   /* Specific styles for printing receipts. */
-  /* This is activated by adding .print-receipt-wrapper to the page. */
   .print-receipt-wrapper > * {
     visibility: hidden;
   }
@@ -197,7 +196,7 @@ body {
     position: absolute;
     left: 0;
     top: 0;
-    width: 100%; /* Will be constrained by paper size */
+    width: 74mm; /* Set a fixed width for receipt paper, allowing for padding */
     padding: 3mm;
     font-family: 'Courier New', Courier, monospace;
     font-size: 9pt;
