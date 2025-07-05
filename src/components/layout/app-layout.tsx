@@ -15,7 +15,7 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 import { Logo } from "@/components/icons/logo";
-import { LayoutDashboard, Package, LogOut, Receipt } from "lucide-react";
+import { LayoutDashboard, Package, LogOut, Receipt, BookText } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -79,6 +79,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   <SidebarMenuButton isActive={pathname === "/transactions"} tooltip="Transaksi">
                     <Receipt />
                     <span>Transaksi</span>
+                  </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <Link href="/reports">
+                  <SidebarMenuButton isActive={pathname === "/reports"} tooltip="Laporan">
+                    <BookText />
+                    <span>Laporan</span>
                   </SidebarMenuButton>
                 </Link>
               </SidebarMenuItem>
