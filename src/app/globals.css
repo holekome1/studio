@@ -7,6 +7,10 @@ body {
   font-family: 'PT Sans', sans-serif;
 }
 
+.report-print-header {
+  display: none;
+}
+
 @layer base {
   :root {
     --background: 207 87% 94%; /* Very Light Blue #E3F2FD */
@@ -116,24 +120,66 @@ body {
   .no-print {
     display: none !important;
   }
+  
+  .report-print-header {
+    display: block !important;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid #000;
+    padding-bottom: 1rem;
+  }
+
+  .report-print-header > h1 {
+    font-size: 22pt;
+    font-weight: bold;
+  }
+  .report-print-header > h2 {
+    font-size: 16pt;
+    font-weight: normal;
+    margin-bottom: 0.5rem;
+  }
+  .report-print-header > p {
+    font-size: 10pt;
+    color: #333 !important;
+  }
+
 
   /* General styles for A4 report printing */
-  .card {
-     border: 1px solid #ddd !important;
+  .report-page .card {
+     border: none !important;
      box-shadow: none !important;
      background: transparent !important;
-     /* Try to prevent cards from breaking across pages */
      break-inside: avoid;
   }
 
-  h1, h2, h3, h4, h5, h6, p, div, span, td, th {
+  .report-page h1, .report-page h2, .report-page h3, .report-page h4, .report-page h5, .report-page h6, .report-page p, .report-page div, .report-page span, .report-page td, .report-page th {
       color: #000 !important;
   }
   
-  .badge {
+  .report-page .badge {
       border-color: #ccc !important;
       background-color: #eee !important;
       color: #000 !important;
+  }
+
+  .report-page .card-header, .report-page .card-content {
+      padding: 0 !important;
+  }
+
+  .report-page .grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1rem !important;
+  }
+  
+  .report-page .grid > .card {
+    margin-bottom: 1.5rem;
+  }
+
+  .report-page .card-title {
+    font-size: 14pt;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #ccc;
+    margin-bottom: 1rem;
   }
 
   /* Specific styles for printing receipts. */

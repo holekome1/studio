@@ -38,6 +38,8 @@ const formatRupiah = (amount: number) => {
 
 interface ReportData {
   period: string;
+  startDate: string;
+  endDate: string;
   totalMasuk: number;
   totalKeluar: number;
   totalValueMasuk: number;
@@ -61,11 +63,20 @@ export default function ReportsPage() {
   const [records, setRecords] = useState<TransactionRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState('month');
+  const [printDate, setPrintDate] = useState('');
 
   useEffect(() => {
     const storedRecords = getStoredTransactions();
     setRecords(storedRecords);
     setIsLoading(false);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setPrintDate(new Date().toLocaleDateString('id-ID', {
+          day: '2-digit', month: 'long', year: 'numeric'
+      }));
+    }
   }, []);
 
   const reportData = useMemo<ReportData>(() => {
@@ -83,8 +94,9 @@ export default function ReportsPage() {
     }
     
     const filteredRecords = records.filter(record => isWithinInterval(new Date(record.timestamp), interval));
+    const formatDate = (date: Date) => date.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
 
-    const data: Omit<ReportData, 'period'> = {
+    const data: Omit<ReportData, 'period' | 'startDate' | 'endDate'> = {
         totalMasuk: 0,
         totalKeluar: 0,
         totalValueMasuk: 0,
@@ -129,7 +141,12 @@ export default function ReportsPage() {
         .slice(0, 5);
 
 
-    return { ...data, period: selectedOption.label };
+    return { 
+        ...data, 
+        period: selectedOption.label,
+        startDate: formatDate(interval.start),
+        endDate: formatDate(interval.end),
+    };
   }, [records, filter]);
 
   if (isLoading) {
@@ -151,11 +168,18 @@ export default function ReportsPage() {
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+    <div className="space-y-6 report-page">
+      <div className="report-print-header">
+        <h1>GUDANG MAJU SEJAHTRA</h1>
+        <h2>Laporan Gabungan</h2>
+        <p>Periode Laporan: {reportData.startDate} - {reportData.endDate}</p>
+        <p>Tanggal Cetak: {printDate}</p>
+      </div>
+
+      <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center no-print">
         <h1 className="font-headline text-3xl font-bold">Laporan Gabungan</h1>
         <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-          <div className="w-full sm:w-auto sm:min-w-[220px] no-print">
+          <div className="w-full sm:w-auto sm:min-w-[220px]">
             <Label htmlFor="filter-select" className="sr-only">Filter berdasarkan periode</Label>
             <Select value={filter} onValueChange={setFilter}>
               <SelectTrigger id="filter-select" className="w-full">
@@ -168,7 +192,7 @@ export default function ReportsPage() {
               </SelectContent>
             </Select>
           </div>
-          <Button onClick={() => window.print()} variant="outline" className="no-print">
+          <Button onClick={() => window.print()} variant="outline">
             <Printer className="mr-2 h-4 w-4" />
             Cetak Laporan
           </Button>
@@ -176,7 +200,7 @@ export default function ReportsPage() {
       </div>
       
       <Card>
-        <CardHeader>
+        <CardHeader className="no-print">
             <CardTitle>Ringkasan Laporan - {reportData.period}</CardTitle>
             <CardDescription>Ringkasan aktivitas inventaris untuk periode yang dipilih.</CardDescription>
         </CardHeader>
