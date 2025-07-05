@@ -17,6 +17,7 @@ import {
 import { Logo } from "@/components/icons/logo";
 import { LayoutDashboard, Package, LogOut, Receipt } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { ThemeToggle } from "./theme-toggle";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -88,10 +89,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                <SidebarMenuItem>
                  <SidebarMenuButton onClick={logout} tooltip="Keluar">
                     <LogOut />
-                    <span>Keluar ({user?.email})</span>
+                    <span>Keluar ({user?.username})</span>
                   </SidebarMenuButton>
                </SidebarMenuItem>
             </SidebarMenu>
+            <div className="flex justify-center p-2 group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:py-2">
+                <ThemeToggle />
+            </div>
           </SidebarFooter>
         </Sidebar>
         <main className="relative flex min-h-svh flex-1 flex-col bg-background">
