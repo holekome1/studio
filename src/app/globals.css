@@ -108,9 +108,7 @@ body {
 
 @media print {
   @page {
-    /* Standard thermal receipt paper is 80mm wide. Height is automatic. */
     size: 80mm auto;
-    /* Remove default browser margins */
     margin: 0;
   }
 
@@ -136,9 +134,10 @@ body {
     left: 0;
     top: 0;
     width: 100%;
-    padding: 3mm; /* Add a small padding for the content inside the receipt */
+    padding: 3mm;
     font-family: 'Courier New', Courier, monospace;
-    font-size: 9pt; /* Common font size for receipts */
+    font-size: 9pt;
+    box-sizing: border-box;
   }
 
   .no-print {
