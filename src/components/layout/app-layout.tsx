@@ -1,4 +1,3 @@
-
 "use client";
 
 import { usePathname } from "next/navigation";
@@ -14,7 +13,6 @@ import {
   SidebarMenuButton,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Logo } from "@/components/icons/logo";
 import { LayoutDashboard, Package, LogOut, Receipt, BookText } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { ThemeToggle } from "./theme-toggle";
@@ -50,7 +48,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <Sidebar collapsible="icon" className="shadow-lg no-print">
           <SidebarHeader className="p-4">
             <div className="flex items-center gap-2">
-              <Logo className="h-8 w-8 text-sidebar-primary-foreground" />
+              teknik
               <h1 className="text-xl font-headline font-semibold text-sidebar-primary-foreground group-data-[collapsible=icon]:hidden">
                 GUDANG MAJU SEJAHTRA
               </h1>
