@@ -3,10 +3,10 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import Image from 'next/image';
 import type { TransactionRecord } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Logo } from '@/components/icons/logo';
 import { Printer } from 'lucide-react';
 
 const formatRupiah = (amount: number) => {
@@ -78,7 +78,7 @@ export default function PrintInvoicePage() {
         <div className="max-w-md mx-auto bg-white shadow-lg">
              <div className="printable-area p-6 text-sm">
                 <header className="text-center mb-6">
-                    <Logo className="h-12 w-12 mx-auto text-gray-700 mb-2"/>
+                    <Image src="/logo.png" alt="Company Logo" width={48} height={48} className="mx-auto mb-2" />
                     <h1 className="text-xl font-bold text-gray-800">GUDANG MAJU SEJAHTRA</h1>
                     <p className="text-gray-500">Jl. Otomotif Raya No. 123, Jakarta</p>
                 </header>

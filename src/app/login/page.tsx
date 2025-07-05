@@ -2,13 +2,13 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Logo } from "@/components/icons/logo";
 import type { DummyUser } from "@/types";
 
 const dummyUsers: DummyUser[] = [
@@ -61,8 +61,8 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <Card className="shadow-2xl">
           <CardHeader className="text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary">
-              <Logo className="h-8 w-8 text-primary-foreground" />
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
+               <Image src="/logo.png" alt="Gudang Maju Sejahtera Logo" width={64} height={64} className="rounded-md" />
             </div>
             <CardTitle>GUDANG MAJU SEJAHTRA</CardTitle>
             <CardDescription>
