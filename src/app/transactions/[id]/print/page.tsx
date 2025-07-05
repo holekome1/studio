@@ -74,7 +74,7 @@ export default function PrintInvoicePage() {
   }
 
   return (
-    <div className="bg-gray-100 min-h-screen p-4 sm:p-8">
+    <div className="bg-gray-100 min-h-screen p-4 sm:p-8 print-receipt-wrapper">
         <div className="max-w-md mx-auto bg-white shadow-lg">
              <div className="printable-area p-6 text-sm">
                 <header className="text-center mb-6">

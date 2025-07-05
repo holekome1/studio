@@ -107,25 +107,24 @@ body {
 }
 
 @media print {
-  @page {
-    size: 80mm auto;
-    margin: 0;
-  }
-
   body,
   html {
-    background: #fff;
-    color: #000;
-    margin: 0;
-    padding: 0;
+    background: #fff !important;
+    color: #000 !important;
   }
 
-  body * {
+  .no-print {
+    display: none !important;
+  }
+
+  /* Specific styles for printing receipts. */
+  /* This is activated by adding .print-receipt-wrapper to the page. */
+  .print-receipt-wrapper > * {
     visibility: hidden;
   }
 
-  .printable-area,
-  .printable-area * {
+  .print-receipt-wrapper .printable-area,
+  .print-receipt-wrapper .printable-area * {
     visibility: visible;
   }
 
@@ -133,14 +132,10 @@ body {
     position: absolute;
     left: 0;
     top: 0;
-    width: 100%;
+    width: 100%; /* Will be constrained by paper size */
     padding: 3mm;
     font-family: 'Courier New', Courier, monospace;
     font-size: 9pt;
     box-sizing: border-box;
-  }
-
-  .no-print {
-    display: none !important;
   }
 }
