@@ -61,8 +61,8 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         <Card className="shadow-2xl">
           <CardHeader className="text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
-               <Image src="/logo.png" alt="Gudang Maju Sejahtera Logo" width={64} height={64} className="rounded-md" />
+            <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center rounded-full">
+               <Image src="/logo.png" alt="Gudang Maju Sejahtera Logo" width={80} height={80} className="rounded-md" />
             </div>
             <CardTitle>GUDANG MAJU SEJAHTRA</CardTitle>
             <CardDescription>

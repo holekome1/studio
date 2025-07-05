@@ -50,7 +50,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <Sidebar collapsible="icon" className="shadow-lg no-print">
           <SidebarHeader className="p-4">
             <div className="flex items-center gap-2">
-              <Image src="/logo.png" alt="Gudang Maju Sejahtera Logo" width={32} height={32} className="rounded-sm" />
+              <Image src="/logo.png" alt="Gudang Maju Sejahtera Logo" width={40} height={40} className="rounded-sm" />
               <h1 className="text-xl font-headline font-semibold text-sidebar-primary-foreground group-data-[collapsible=icon]:hidden">
                 GUDANG MAJU SEJAHTRA
               </h1>
