@@ -25,8 +25,8 @@ import type { Part } from "@/types";
 import { partCategories } from "@/types";
 
 const formSchema = z.object({
+  barcode: z.string().min(1, "Barcode harus diisi."),
   name: z.string().min(2, "Nama minimal 2 karakter."),
-  barcode: z.string().optional(),
   quantity: z.coerce.number().int().min(0, "Jumlah tidak boleh negatif."),
   price: z.coerce.number().min(0, "Harga tidak boleh negatif."),
   storageLocation: z.string().min(1, "Lokasi penyimpanan harus diisi."),
@@ -39,7 +39,7 @@ export type PartFormValues = z.infer<typeof formSchema>;
 interface PartFormProps {
   onSubmit: (values: PartFormValues) => void;
   onCancel: () => void;
-  initialData?: Partial<Part>;
+  initialData?: Part;
   isEditing?: boolean;
 }
 
@@ -52,8 +52,8 @@ export function PartForm({
   const form = useForm<PartFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      barcode: initialData?.id || "",
       name: initialData?.name || "",
-      barcode: initialData?.barcode || "",
       quantity: initialData?.quantity || 0,
       price: initialData?.price || 0,
       storageLocation: initialData?.storageLocation || "",
@@ -67,12 +67,16 @@ export function PartForm({
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <FormField
           control={form.control}
-          name="name"
+          name="barcode"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Nama Suku Cadang</FormLabel>
+              <FormLabel>Barcode / ID Unik Barang</FormLabel>
               <FormControl>
-                <Input placeholder="cth., Busi NGK CR7HSA" {...field} />
+                <Input
+                  placeholder="Pindai atau ketik ID barcode..."
+                  {...field}
+                  disabled={isEditing}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -81,12 +85,12 @@ export function PartForm({
         
         <FormField
           control={form.control}
-          name="barcode"
+          name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Barcode (Opsional)</FormLabel>
+              <FormLabel>Nama Suku Cadang</FormLabel>
               <FormControl>
-                <Input placeholder="Pindai atau ketik ID barcode..." {...field} />
+                <Input placeholder="cth., Busi NGK CR7HSA" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

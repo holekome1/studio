@@ -59,7 +59,7 @@ export function PartTable({ parts, onEdit, onDelete, userRole }: PartTableProps)
               <TableHeader>
                 <TableRow>
                   <TableHead>Nama</TableHead>
-                  <TableHead>Barcode</TableHead>
+                  <TableHead>Barcode / ID</TableHead>
                   <TableHead>Kategori</TableHead>
                   <TableHead className="text-right">Jumlah</TableHead>
                   <TableHead className="text-right">Harga</TableHead>
@@ -75,7 +75,7 @@ export function PartTable({ parts, onEdit, onDelete, userRole }: PartTableProps)
                       <TableCell className="font-medium">{part.name}</TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2 font-mono text-xs">
-                          {part.barcode ? <> <Barcode className="h-4 w-4 text-muted-foreground"/> {part.barcode} </> : '-'}
+                          <Barcode className="h-4 w-4 text-muted-foreground"/> {part.id}
                         </div>
                       </TableCell>
                       <TableCell>

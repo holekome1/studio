@@ -11,9 +11,8 @@ export interface DummyUser extends User {
 }
 
 export interface Part {
-  id: string;
+  id: string; // This will now be the barcode
   name: string;
-  barcode?: string;
   quantity: number;
   price: number;
   storageLocation: string;

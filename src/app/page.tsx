@@ -100,68 +100,38 @@ const Home: NextPage = () => {
 
   const handleAddPart = async (values: PartFormValues) => {
     try {
-      const { barcode } = values;
-      if (barcode) {
-        const existingBarcodePart = parts.find(p => p.barcode === barcode);
-        if (existingBarcodePart) {
-           toast({ title: "Barcode Duplikat", description: `Barcode ini sudah digunakan untuk barang: ${existingBarcodePart.name}.`, variant: "destructive" });
-           return;
-        }
-      }
+      const { barcode, ...partData } = values;
 
-      const existingPart = parts.find(p => p.name.toLowerCase() === values.name.trim().toLowerCase());
-      
-      let updatedParts: Part[];
+      const existingPart = parts.find(p => p.id === barcode);
       if (existingPart) {
-        // Update existing part
-        updatedParts = parts.map(p => 
-          p.id === existingPart.id
-          ? { ...p, 
-              quantity: p.quantity + values.quantity,
-              price: values.price,
-              storageLocation: values.storageLocation,
-              category: values.category,
-              minStock: values.minStock,
-              barcode: values.barcode || p.barcode
-            }
-          : p
-        );
-        
-        await createTransaction({
-          type: 'in',
-          items: [{ partId: existingPart.id, partName: existingPart.name, quantity: values.quantity, price: values.price }],
-          notes: `Penambahan stok untuk barang yang sudah ada: ${existingPart.name}`,
-        });
-
-        toast({
-          title: "Stok Diperbarui",
-          description: `Jumlah untuk ${existingPart.name} telah ditambahkan.`,
-        });
-
-      } else {
-        // Add new part
-        const newPart: Part = {
-          id: `part_${Date.now()}`,
-          ...values,
-        };
-        updatedParts = [...parts, newPart];
-
-        await createTransaction({
-          type: 'in',
-          items: [{ partId: newPart.id, partName: newPart.name, quantity: values.quantity, price: values.price }],
-          notes: 'Suku cadang baru ditambahkan',
-        });
-        toast({
-          title: "Suku Cadang Ditambahkan",
-          description: `${values.name} telah ditambahkan ke inventaris.`,
-        });
+         toast({ title: "Barcode Duplikat", description: `Suku cadang dengan barcode/ID ini sudah ada: ${existingPart.name}.`, variant: "destructive" });
+         return;
       }
+      
+      const newPart: Part = {
+        id: barcode,
+        ...partData,
+      };
+
+      const updatedParts = [...parts, newPart];
       setParts(updatedParts);
       storeData('inventory_parts', updatedParts);
+
+      await createTransaction({
+        type: 'in',
+        items: [{ partId: newPart.id, partName: newPart.name, quantity: values.quantity, price: values.price }],
+        notes: `Suku cadang baru ditambahkan: ${newPart.name}`
+      });
+      
+      toast({
+        title: "Suku Cadang Ditambahkan",
+        description: `${values.name} telah ditambahkan ke inventaris.`,
+      });
+      
       setIsPartFormOpen(false);
 
     } catch (error) {
-      console.error("Error adding/updating part:", error);
+      console.error("Error adding part:", error);
       toast({ title: "Gagal Menyimpan", description: "Terjadi kesalahan saat menyimpan suku cadang.", variant: "destructive" });
     }
   };
@@ -171,19 +141,18 @@ const Home: NextPage = () => {
     if (!editingPart?.id) return;
     
     try {
-       const { barcode } = values;
-       if (barcode) {
-         const existingBarcodePart = parts.find(p => p.barcode === barcode && p.id !== editingPart.id);
-         if (existingBarcodePart) {
-            toast({ title: "Barcode Duplikat", description: `Barcode ini sudah digunakan untuk barang: ${existingBarcodePart.name}.`, variant: "destructive" });
-            return;
-         }
-       }
+      // The barcode (ID) is not editable, so we don't need to check for duplicates.
+      const { barcode, ...partData } = values;
 
       const oldPart = parts.find(p => p.id === editingPart.id);
       if (!oldPart) return;
+      
+      const updatedPart: Part = {
+        id: editingPart.id, // Ensure ID is preserved
+        ...partData
+      };
 
-      const updatedParts = parts.map(p => p.id === editingPart.id ? { ...p, ...values } : p);
+      const updatedParts = parts.map(p => p.id === editingPart.id ? updatedPart : p);
       setParts(updatedParts);
       storeData('inventory_parts', updatedParts);
 
@@ -308,7 +277,7 @@ const Home: NextPage = () => {
     return parts.filter((part) => {
       const searchLower = searchTerm.toLowerCase();
       const nameMatch = part.name.toLowerCase().includes(searchLower);
-      const barcodeMatch = part.barcode?.toLowerCase().includes(searchLower);
+      const barcodeMatch = part.id.toLowerCase().includes(searchLower);
       const categoryMatch = categoryFilter ? part.category === categoryFilter : true;
       const locationMatch = locationFilter ? part.storageLocation === locationFilter : true;
       return (nameMatch || barcodeMatch) && categoryMatch && locationMatch;
@@ -375,7 +344,7 @@ const Home: NextPage = () => {
               {editingPart ? "Edit Suku Cadang" : "Tambah Suku Cadang Baru"}
             </DialogTitle>
             {editingPart && <DialogDescription>Perbarui detail untuk {editingPart.name}.</DialogDescription>}
-            {!editingPart && <DialogDescription>Masukkan detail untuk suku cadang baru.</DialogDescription>}
+            {!editingPart && <DialogDescription>Masukkan detail untuk suku cadang baru. Barcode tidak dapat diubah setelah disimpan.</DialogDescription>}
           </DialogHeader>
           <div className="mt-4">
             <PartForm

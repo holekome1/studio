@@ -82,7 +82,7 @@ export function TransactionForm({ parts, onSubmit, onCancel }: TransactionFormPr
   const handleBarcodeKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && barcodeInput.trim() !== '') {
       e.preventDefault();
-      const part = parts.find(p => p.barcode === barcodeInput.trim());
+      const part = parts.find(p => p.id === barcodeInput.trim());
       if (part) {
         if (addItemToCart(part, 1)) { // Automatically add 1 item on scan
           toast({ title: "Item Ditambahkan", description: `${part.name} ditambahkan ke keranjang.` });
