@@ -100,6 +100,15 @@ const Home: NextPage = () => {
 
   const handleAddPart = async (values: PartFormValues) => {
     try {
+      const { barcode } = values;
+      if (barcode) {
+        const existingBarcodePart = parts.find(p => p.barcode === barcode);
+        if (existingBarcodePart) {
+           toast({ title: "Barcode Duplikat", description: `Barcode ini sudah digunakan untuk barang: ${existingBarcodePart.name}.`, variant: "destructive" });
+           return;
+        }
+      }
+
       const existingPart = parts.find(p => p.name.toLowerCase() === values.name.trim().toLowerCase());
       
       let updatedParts: Part[];
@@ -112,7 +121,8 @@ const Home: NextPage = () => {
               price: values.price,
               storageLocation: values.storageLocation,
               category: values.category,
-              minStock: values.minStock
+              minStock: values.minStock,
+              barcode: values.barcode || p.barcode
             }
           : p
         );
@@ -161,6 +171,15 @@ const Home: NextPage = () => {
     if (!editingPart?.id) return;
     
     try {
+       const { barcode } = values;
+       if (barcode) {
+         const existingBarcodePart = parts.find(p => p.barcode === barcode && p.id !== editingPart.id);
+         if (existingBarcodePart) {
+            toast({ title: "Barcode Duplikat", description: `Barcode ini sudah digunakan untuk barang: ${existingBarcodePart.name}.`, variant: "destructive" });
+            return;
+         }
+       }
+
       const oldPart = parts.find(p => p.id === editingPart.id);
       if (!oldPart) return;
 
@@ -287,10 +306,12 @@ const Home: NextPage = () => {
 
   const filteredParts = useMemo(() => {
     return parts.filter((part) => {
-      const nameMatch = part.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const searchLower = searchTerm.toLowerCase();
+      const nameMatch = part.name.toLowerCase().includes(searchLower);
+      const barcodeMatch = part.barcode?.toLowerCase().includes(searchLower);
       const categoryMatch = categoryFilter ? part.category === categoryFilter : true;
       const locationMatch = locationFilter ? part.storageLocation === locationFilter : true;
-      return nameMatch && categoryMatch && locationMatch;
+      return (nameMatch || barcodeMatch) && categoryMatch && locationMatch;
     }).sort((a,b) => a.name.localeCompare(b.name));
   }, [parts, searchTerm, categoryFilter, locationFilter]);
   
@@ -372,7 +393,7 @@ const Home: NextPage = () => {
         <DialogContent className="sm:max-w-2xl">
            <DialogHeader>
              <DialogTitle className="font-headline text-2xl">Buat Transaksi Keluar</DialogTitle>
-             <DialogDescription>Pilih suku cadang dan jumlah yang akan dikeluarkan dari inventaris.</DialogDescription>
+             <DialogDescription>Pindai barcode atau pilih suku cadang dan jumlah yang akan dikeluarkan dari inventaris.</DialogDescription>
            </DialogHeader>
             <div className="mt-4">
               <TransactionForm

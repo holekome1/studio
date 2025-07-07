@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import type { Part, TransactionItem } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,9 +13,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { PlusCircle, Trash2, XCircle } from "lucide-react";
+import { Barcode, PlusCircle, Trash2, XCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "../ui/scroll-area";
+import { Separator } from "../ui/separator";
 
 interface TransactionFormProps {
   parts: Part[];
@@ -36,42 +37,61 @@ export function TransactionForm({ parts, onSubmit, onCancel }: TransactionFormPr
   const [cartItems, setCartItems] = useState<TransactionItem[]>([]);
   const [selectedPartId, setSelectedPartId] = useState<string>("");
   const [quantity, setQuantity] = useState<number>(1);
+  const [barcodeInput, setBarcodeInput] = useState("");
   const { toast } = useToast();
 
-  const handleAddItem = () => {
-    if (!selectedPartId || quantity <= 0) {
-      toast({ title: "Input Tidak Valid", description: "Pilih suku cadang dan masukkan jumlah yang valid.", variant: "destructive" });
-      return;
-    }
+  const addItemToCart = (partToAdd: Part, qty: number): boolean => {
+    if (!partToAdd) return false;
 
-    const part = parts.find(p => p.id === selectedPartId);
-    if (!part) return;
-
-    const existingCartItem = cartItems.find(item => item.partId === selectedPartId);
+    const existingCartItem = cartItems.find(item => item.partId === partToAdd.id);
     const currentCartQuantity = existingCartItem?.quantity || 0;
-    
-    if (quantity + currentCartQuantity > part.quantity) {
-      toast({ title: "Stok Tidak Cukup", description: `Stok ${part.name} hanya tersisa ${part.quantity}.`, variant: "destructive" });
-      return;
+
+    if (qty + currentCartQuantity > partToAdd.quantity) {
+      toast({ title: "Stok Tidak Cukup", description: `Stok ${partToAdd.name} hanya tersisa ${partToAdd.quantity}.`, variant: "destructive" });
+      return false;
     }
 
     if (existingCartItem) {
       setCartItems(cartItems.map(item =>
-        item.partId === selectedPartId ? { ...item, quantity: item.quantity + quantity } : item
+        item.partId === partToAdd.id ? { ...item, quantity: item.quantity + qty } : item
       ));
     } else {
       const newItem: TransactionItem = {
-        partId: part.id,
-        partName: part.name,
-        quantity: quantity,
-        price: part.price,
+        partId: partToAdd.id,
+        partName: partToAdd.name,
+        quantity: qty,
+        price: partToAdd.price,
       };
       setCartItems([...cartItems, newItem]);
     }
-    
-    // Reset form
-    setSelectedPartId("");
-    setQuantity(1);
+    return true;
+  };
+  
+  const handleAddItemManual = () => {
+    if (!selectedPartId || quantity <= 0) {
+      toast({ title: "Input Tidak Valid", description: "Pilih suku cadang dan masukkan jumlah yang valid.", variant: "destructive" });
+      return;
+    }
+    const part = parts.find(p => p.id === selectedPartId);
+    if(part && addItemToCart(part, quantity)) {
+        setSelectedPartId("");
+        setQuantity(1);
+    }
+  };
+  
+  const handleBarcodeKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && barcodeInput.trim() !== '') {
+      e.preventDefault();
+      const part = parts.find(p => p.barcode === barcodeInput.trim());
+      if (part) {
+        if (addItemToCart(part, 1)) { // Automatically add 1 item on scan
+          toast({ title: "Item Ditambahkan", description: `${part.name} ditambahkan ke keranjang.` });
+          setBarcodeInput(""); // Clear input after successful scan
+        }
+      } else {
+        toast({ title: "Barcode Tidak Ditemukan", description: "Suku cadang dengan barcode ini tidak ada di inventaris.", variant: "destructive" });
+      }
+    }
   };
 
   const handleRemoveItem = (partId: string) => {
@@ -91,10 +111,27 @@ export function TransactionForm({ parts, onSubmit, onCancel }: TransactionFormPr
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Part selection and quantity */}
+       <div className="relative">
+          <Barcode className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Pindai barcode lalu tekan Enter..."
+            value={barcodeInput}
+            onChange={(e) => setBarcodeInput(e.target.value)}
+            onKeyDown={handleBarcodeKeyDown}
+            className="pl-10 text-base"
+          />
+        </div>
+      
+      <div className="flex items-center gap-4">
+        <Separator className="flex-1" />
+        <span className="text-xs text-muted-foreground">ATAU</span>
+        <Separator className="flex-1" />
+      </div>
+
       <div className="flex items-end gap-4">
         <div className="flex-1">
-          <label className="text-sm font-medium">Suku Cadang</label>
+          <label className="text-sm font-medium">Pilih Manual</label>
            <Select value={selectedPartId} onValueChange={setSelectedPartId}>
             <SelectTrigger>
               <SelectValue placeholder="Pilih suku cadang..." />
@@ -117,13 +154,12 @@ export function TransactionForm({ parts, onSubmit, onCancel }: TransactionFormPr
             min="1"
           />
         </div>
-        <Button type="button" onClick={handleAddItem} size="icon">
+        <Button type="button" onClick={handleAddItemManual} size="icon">
           <PlusCircle className="h-5 w-5"/>
            <span className="sr-only">Tambah Item</span>
         </Button>
       </div>
 
-      {/* Cart Items Table */}
        {cartItems.length > 0 && (
          <div className="space-y-2">
             <h3 className="text-lg font-medium">Item Transaksi</h3>
@@ -163,11 +199,10 @@ export function TransactionForm({ parts, onSubmit, onCancel }: TransactionFormPr
              <div className="flex flex-col items-center justify-center p-10 text-center h-[200px] border-dashed border-2 rounded-md">
                 <XCircle className="mb-4 h-12 w-12 text-muted-foreground" />
                 <h3 className="text-lg font-semibold text-muted-foreground">Belum ada item</h3>
-                <p className="text-muted-foreground">Pilih suku cadang untuk ditambahkan ke transaksi.</p>
+                <p className="text-muted-foreground">Pindai barcode atau pilih suku cadang untuk ditambahkan.</p>
               </div>
         )}
 
-      {/* Form Actions */}
       <div className="flex justify-end space-x-3 pt-4">
         <Button type="button" variant="outline" onClick={onCancel}>
           Batal

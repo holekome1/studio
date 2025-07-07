@@ -13,6 +13,7 @@ export interface DummyUser extends User {
 export interface Part {
   id: string;
   name: string;
+  barcode?: string;
   quantity: number;
   price: number;
   storageLocation: string;

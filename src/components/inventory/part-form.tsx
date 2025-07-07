@@ -26,6 +26,7 @@ import { partCategories } from "@/types";
 
 const formSchema = z.object({
   name: z.string().min(2, "Nama minimal 2 karakter."),
+  barcode: z.string().optional(),
   quantity: z.coerce.number().int().min(0, "Jumlah tidak boleh negatif."),
   price: z.coerce.number().min(0, "Harga tidak boleh negatif."),
   storageLocation: z.string().min(1, "Lokasi penyimpanan harus diisi."),
@@ -52,6 +53,7 @@ export function PartForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: initialData?.name || "",
+      barcode: initialData?.barcode || "",
       quantity: initialData?.quantity || 0,
       price: initialData?.price || 0,
       storageLocation: initialData?.storageLocation || "",
@@ -71,6 +73,20 @@ export function PartForm({
               <FormLabel>Nama Suku Cadang</FormLabel>
               <FormControl>
                 <Input placeholder="cth., Busi NGK CR7HSA" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="barcode"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Barcode (Opsional)</FormLabel>
+              <FormControl>
+                <Input placeholder="Pindai atau ketik ID barcode..." {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

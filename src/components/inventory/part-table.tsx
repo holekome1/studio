@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Edit3, Trash2, Package, AlertTriangle } from "lucide-react";
+import { Edit3, Trash2, Package, AlertTriangle, Barcode } from "lucide-react";
 import type { Part, UserRole } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -59,6 +59,7 @@ export function PartTable({ parts, onEdit, onDelete, userRole }: PartTableProps)
               <TableHeader>
                 <TableRow>
                   <TableHead>Nama</TableHead>
+                  <TableHead>Barcode</TableHead>
                   <TableHead>Kategori</TableHead>
                   <TableHead className="text-right">Jumlah</TableHead>
                   <TableHead className="text-right">Harga</TableHead>
@@ -72,6 +73,11 @@ export function PartTable({ parts, onEdit, onDelete, userRole }: PartTableProps)
                   return (
                     <TableRow key={part.id} className={isLowStock ? "bg-destructive/10" : ""}>
                       <TableCell className="font-medium">{part.name}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2 font-mono text-xs">
+                          {part.barcode ? <> <Barcode className="h-4 w-4 text-muted-foreground"/> {part.barcode} </> : '-'}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <Badge variant="secondary">{part.category}</Badge>
                       </TableCell>
